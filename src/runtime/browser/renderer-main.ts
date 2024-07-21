@@ -17,4 +17,3 @@ export default class PGSMainThraedRenderer implements PGSRenderer {
     source.width = source.height = 0;
   }
 }
-

@@ -96,4 +96,3 @@ export default (pgs: Readonly<AcquisitionPoint>): OffscreenCanvas | HTMLCanvasEl
 
   return canvas;
 }
-
