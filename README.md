@@ -31,3 +31,10 @@
   controller.attachMedia(video)
 </script>
 ```
+
+## Build
+
+```bash
+yarn
+yarn build
+```
