@@ -7,16 +7,20 @@ import PGSFeeder from './feeder';
 
 export default class PGSSupFeeder implements PGSFeeder {
   private acquisitions: Readonly<AcquisitionPoint>[];
+  private timeshift: number;
 
-  public constructor(sup: ArrayBuffer) {
+  public constructor(sup: ArrayBuffer, timeshift: number = 0) {
     const segments = readFromSup(sup);
     const displays = collectDisplaySet(segments);
     const acquisitions = convertAcquisitionPoint(displays);
 
     this.acquisitions = acquisitions;
+    this.timeshift = timeshift;
   }
 
   public content(time: number): Readonly<AcquisitionPoint> | null {
+    time -= this.timeshift;
+
     {
       const first = this.acquisitions[0];
       if (!first) { return null; }
