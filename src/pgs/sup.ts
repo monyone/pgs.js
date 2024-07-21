@@ -9,7 +9,8 @@ export default (sup: ArrayBuffer): TimestampedSegment[] => {
 
   try {
     while(!stream.isEmpty()) {
-      stream.readU16();
+      const magic = stream.readU16();
+      if (magic !== 0x5047) { throw new ValidationError('Magic Number not Found!'); }
       const pts = stream.readU32();
       const dts = stream.readU32();
       const timescale = 90000;
