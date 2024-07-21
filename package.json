@@ -1,10 +1,14 @@
 {
   "name": "pgs.js",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "./dist/index.umd.js",
   "module": "./dist/index.mjs",
   "types": "./dist/types/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist",
+    "src",
+    "tsconfig.json"
+  ],
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
@@ -12,6 +16,8 @@
       "require": "./dist/index.umd.js"
     }
   },
+  "author": "monyone <monyone.teihen@gmail.com>",
+  "description": "PGS (Presentation Graphic Stream) Subtitle For HTML5 Media Playback",
   "repository": {
     "type": "git",
     "url": "https://github.com/monyone/pgs.js"
