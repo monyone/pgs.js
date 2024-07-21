@@ -1,5 +1,6 @@
 import PGSFeeder from "../common/feeder";
 import PGSRenderer from "./renderer";
+import PGSMainThraedRenderer from "./renderer-main";
 
 export default class PGSController {
   // Video
@@ -43,7 +44,7 @@ export default class PGSController {
     this.media.addEventListener('seeked', this.onSeekedHandler);
 
     // prepare Renderer
-    this.renderer = new PGSRenderer();
+    this.renderer = new PGSMainThraedRenderer();
 
     // prepare viewer canvas for absolute plane
     this.viewerCanvas = document.createElement('canvas')

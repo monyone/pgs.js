@@ -11,4 +11,5 @@ export type { default as PGSFeeder } from './runtime/common/feeder';
 export { default as PGSSupFeeder } from './runtime/common/supfeeder';
 
 export { default as PGSController } from './runtime/browser/controller';
-export { default as PGSRenderer } from './runtime/browser/renderer';
+export type { default as PGSRenderer } from './runtime/browser/renderer';
+export { default as PGSMainThraedRenderer } from './runtime/browser/renderer-main';
