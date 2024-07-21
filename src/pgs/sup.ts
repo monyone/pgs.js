@@ -68,7 +68,8 @@ export default (sup: ArrayBuffer): TimestampedSegment[] => {
       console.error("EOF Occured", e);
     } else if (e instanceof ValidationError) {
       console.error("Validation Error Occured", e);
-    }  }
+    }
+  }
 
   return segments;
 }
