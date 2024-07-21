@@ -217,34 +217,54 @@ export const SequenceFlag = {
   IntermediateSequence: 0x00
 } as const;
 
-export type ObjectDefinitionSegment = {
+type ObjectDefinitionSegmentFirstInSequence = {
   objectId: number;
   objectVersionNumber: number;
-  lastInSequenceFlag: number;
+  lastInSequenceFlag: typeof SequenceFlag.FirstInSequence | typeof SequenceFlag.FirstAndLastInSequence;
   objectDataLength: number;
   width: number;
   height: number;
   objectData: ArrayBuffer;
 }
+type ObjectDefinitionSegmentOtherSequence = {
+  objectId: number;
+  objectVersionNumber: number;
+  lastInSequenceFlag: typeof SequenceFlag.LastInSequence | typeof SequenceFlag.IntermediateSequence;
+  objectData: ArrayBuffer;
+}
+
+export type ObjectDefinitionSegment = ObjectDefinitionSegmentFirstInSequence | ObjectDefinitionSegmentOtherSequence
+
 export const ObjectDefinitionSegment = {
   from(stream: ByteStream): ObjectDefinitionSegment {
     const objectId = stream.readU16()
     const objectVersionNumber = stream.readU8()
     const lastInSequenceFlag = stream.readU8()
-    const objectDataLength = stream.readU24()
-    const width = stream.readU16()
-    const height = stream.readU16()
-    const objectData = stream.readAll();
-
-    return {
-      objectId,
-      objectVersionNumber,
-      lastInSequenceFlag,
-      objectDataLength,
-      width,
-      height,
-      objectData,
-    };
+    if (lastInSequenceFlag === SequenceFlag.FirstInSequence || lastInSequenceFlag === SequenceFlag.FirstAndLastInSequence) {
+      const objectDataLength = stream.readU24()
+      const width = stream.readU16()
+      const height = stream.readU16()
+      const objectData = stream.readAll();
+      return {
+        objectId,
+        objectVersionNumber,
+        lastInSequenceFlag,
+        objectDataLength,
+        width,
+        height,
+        objectData
+      };
+    } else if (lastInSequenceFlag === SequenceFlag.LastInSequence || lastInSequenceFlag === SequenceFlag.IntermediateSequence) {
+      const objectData = stream.readAll();
+      return {
+        objectId,
+        objectVersionNumber,
+        lastInSequenceFlag,
+        objectData,
+      };
+    } else {
+      throw new ValidationError('lastInSequenceFlag Invalid')
+    }
   },
   valueOf(definision?: ObjectDefinitionSegment[]): Map<number, ObjectDefinitionSegment[]> {
     const objects = new Map<number, ObjectDefinitionSegment[]>();
@@ -254,6 +274,9 @@ export const ObjectDefinitionSegment = {
     }
     return objects;
   },
+  isFirstInSequence(definision: ObjectDefinitionSegment): definision is ObjectDefinitionSegmentFirstInSequence {
+    return definision.lastInSequenceFlag === SequenceFlag.FirstInSequence || definision.lastInSequenceFlag === SequenceFlag.FirstAndLastInSequence
+  }
 }
 
 export type Segment = {

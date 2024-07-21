@@ -8,7 +8,9 @@ export default class PGSRenderer {
     if (object.length === 0) { return null; }
 
     const stream = new ByteStream(concat(object.map((obj) => obj.objectData)));
-    const { width, height } = object[0];
+    const firstInSequence = object.find((obj) => ObjectDefinitionSegment.isFirstInSequence(obj));
+    if (firstInSequence == null) { return null; }
+    const { width, height } = firstInSequence;
 
     const data = new Uint8ClampedArray(width * height * 4); // RGBA
 

@@ -18,7 +18,7 @@ export default class PGSController {
   private readonly onSeekedHandler = this.onSeeked.bind(this);
   // Renderer
   private renderer: PGSRenderer | null = null;
-  private privious_composition_number: number | null = null;
+  private privious_pts: number | null = null;
   // Feeder
   private feeder: PGSFeeder | null = null;
   // Control
@@ -142,12 +142,12 @@ export default class PGSController {
   }
 
   private onSeeking() {
-    this.privious_composition_number = null;
+    this.privious_pts = null;
     this.clear();
   }
 
   private onSeeked() {
-    this.privious_composition_number = null;
+    this.privious_pts = null;
   }
 
   private onTimeupdate() {
@@ -164,7 +164,7 @@ export default class PGSController {
     if (content == null) { return; }
 
     // If already rendered, ignore it
-    if (this.privious_composition_number === content.composition.compositionNumber) {
+    if (this.privious_pts === content.pts) {
       return;
     }
 
@@ -176,7 +176,7 @@ export default class PGSController {
       this.renderer.render(content, this.videoCanvas);
     }
 
-    this.privious_composition_number = content.composition.compositionNumber;
+    this.privious_pts = content.pts;
   }
 
 
@@ -194,7 +194,7 @@ export default class PGSController {
       cancelAnimationFrame(this.timer);
       this.timer = null;
     }
-    this.privious_composition_number = null;
+    this.privious_pts = null;
     this.clear();
   }
 
