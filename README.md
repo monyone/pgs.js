@@ -6,11 +6,11 @@
 
 ## Getting Started
 
-### PreCondition: Wrapping
+### PreCondition: Wrapping Element Needed!
 
 ```html
-<div style="width: 960px; height: 540px; position: relative; display: inline-block;"> <!-- This Wrapping Needed! -->
-  <video id="video" controls style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;"></video>
+<div style="position: relative; display: inline-block;"> <!-- This Relative Wrapping Needed! -->
+  <video></video>
 </div>
 ```
 
