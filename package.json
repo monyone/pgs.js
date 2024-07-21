@@ -1,0 +1,29 @@
+{
+  "name": "pgs.js",
+  "version": "0.0.1",
+  "main": "./dist/index.umd.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "files": ["dist"],
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.umd.js"
+    }
+  },
+  "keywords": [
+    "html5",
+    "subtitle",
+    "pgs"
+  ],
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "tsc && vite build"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.3.4"
+  }
+}
