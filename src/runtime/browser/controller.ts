@@ -13,8 +13,12 @@ export default class PGSController {
   // Timeupdate Handler
   private readonly onTimeupdateHandler = this.onTimeupdate.bind(this);
   private timer: number | null = null;
+  // Seeking Handler
+  private readonly onSeekingHandler = this.onSeeking.bind(this);
+  private readonly onSeekedHandler = this.onSeeked.bind(this);
   // Renderer
   private renderer: PGSRenderer | null = null;
+  private privious_composition_number: number | null = null;
   // Feeder
   private feeder: PGSFeeder | null = null;
   // Control
@@ -33,6 +37,10 @@ export default class PGSController {
 
   private setup() {
     if (!this.media || !this.container) { return; }
+
+    // setup media seeking handler
+    this.media.addEventListener('seeking', this.onSeekingHandler);
+    this.media.addEventListener('seeked', this.onSeekedHandler);
 
     // prepare Renderer
     this.renderer = new PGSRenderer();
@@ -58,6 +66,12 @@ export default class PGSController {
   }
 
   private cleanup() {
+    // cleanup media seeking handler
+    if (this.media) {
+      this.media.removeEventListener('seeking', this.onSeekingHandler);
+      this.media.removeEventListener('seeked', this.onSeekedHandler);
+    }
+
     // cleanup ResizeObserver
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
@@ -127,6 +141,15 @@ export default class PGSController {
     this.onTimeupdate();
   }
 
+  private onSeeking() {
+    this.privious_composition_number = null;
+    this.clear();
+  }
+
+  private onSeeked() {
+    this.privious_composition_number = null;
+  }
+
   private onTimeupdate() {
     // not showing, do not show
     if (!this.showing) { return; }
@@ -140,6 +163,11 @@ export default class PGSController {
     const content = this.feeder.content(currentTime) ?? null;
     if (content == null) { return; }
 
+    // If already rendered, ignore it
+    if (this.privious_composition_number === content.composition.compositionNumber) {
+      return;
+    }
+
     if (this.viewerCanvas) {
       this.renderer.render(content, this.viewerCanvas);
     }
@@ -147,6 +175,8 @@ export default class PGSController {
     if (this.videoCanvas) {
       this.renderer.render(content, this.videoCanvas);
     }
+
+    this.privious_composition_number = content.composition.compositionNumber;
   }
 
 
@@ -164,6 +194,7 @@ export default class PGSController {
       cancelAnimationFrame(this.timer);
       this.timer = null;
     }
+    this.privious_composition_number = null;
     this.clear();
   }
 
