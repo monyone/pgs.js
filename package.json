@@ -12,6 +12,10 @@
       "require": "./dist/index.umd.js"
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/monyone/pgs.js"
+  },
   "keywords": [
     "html5",
     "subtitle",
