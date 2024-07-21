@@ -143,6 +143,7 @@ export default class PGSController {
 
   private onSeeking() {
     this.privious_pts = null;
+    this.feeder?.onseek();
     this.clear();
   }
 

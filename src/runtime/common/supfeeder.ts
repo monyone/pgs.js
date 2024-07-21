@@ -40,6 +40,10 @@ export default class PGSSupFeeder implements PGSFeeder {
     return this.acquisitions[begin] ?? null;
   }
 
+  public onseek(): void {
+    return; // No Effect
+  }
+
   public all(): Readonly<AcquisitionPoint>[] {
     return this.acquisitions;
   }
