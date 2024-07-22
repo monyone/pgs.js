@@ -1,6 +1,6 @@
 {
   "name": "pgs.js",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "./dist/index.umd.js",
   "module": "./dist/index.mjs",
   "types": "./dist/types/index.d.ts",
@@ -22,6 +22,7 @@
     "type": "git",
     "url": "https://github.com/monyone/pgs.js"
   },
+  "license": "MIT",
   "keywords": [
     "html5",
     "subtitle",
