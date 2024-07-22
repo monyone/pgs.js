@@ -81,8 +81,13 @@ export default (pgs: Readonly<AcquisitionPoint>): OffscreenCanvas | HTMLCanvasEl
     const data = decodeObject(palette, object);
     if (data == null) { continue; }
 
-    const x = window.windowHorizontalPosition;
-    const y = window.windowVerticalPosition;
+    context.save();
+    const path = new Path2D();
+    path.rect(window.windowHorizontalPosition, window.windowVerticalPosition, window.windowWidth, window.windowHeight);
+    context.clip(path);
+
+    const x = compobisionObject.objectHorizontalPosition;
+    const y = compobisionObject.objectVerticalPosition;
     if (compobisionObject.objectCroppedFlag) {
       const dirtyX = compobisionObject.objectCroppingHorizontalPosition;
       const dirtyY = compobisionObject.objectCroppingVerticalPosition;
@@ -92,6 +97,8 @@ export default (pgs: Readonly<AcquisitionPoint>): OffscreenCanvas | HTMLCanvasEl
     } else {
       context.putImageData(data, x, y);
     }
+
+    context.restore();
   }
 
   return canvas;
