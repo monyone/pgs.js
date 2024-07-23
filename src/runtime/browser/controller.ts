@@ -1,6 +1,7 @@
 import PGSFeeder from "../common/feeder";
 import PGSRenderer from "./renderer";
 import PGSMainThraedRenderer from "./renderer-main";
+import PGSWorkerThraedRenderer from "./renderer-worker";
 
 export default class PGSController {
   // Video
@@ -53,7 +54,7 @@ export default class PGSController {
     const videoResCanvas = document.createElement('canvas');
 
     // prepare Renderer
-    this.viewerResRenderer = new PGSMainThraedRenderer<HTMLCanvasElement>();
+    this.viewerResRenderer = new PGSWorkerThraedRenderer<HTMLCanvasElement>();
     this.viewerResRenderer.attach(viewerResCanvas);
     this.videoResRenderer = new PGSMainThraedRenderer<HTMLCanvasElement>();
     this.videoResRenderer.attach(videoResCanvas);
@@ -80,16 +81,11 @@ export default class PGSController {
       this.resizeObserver = null;
     }
 
-    // remove canvas from container
-    this.viewerResRenderer?.unregister();
-
     // cleanup viewer canvas
-    this.viewerResRenderer?.resize(0, 0);
-    this.viewerResRenderer?.detach();
+    this.viewerResRenderer?.destroy();
 
-    // cleanup video canvas
-    this.videoResRenderer?.resize(0, 0);
-    this.videoResRenderer?.detach();
+    // clean up video canvas
+    this.videoResRenderer?.destroy();
   }
 
   private clear() {

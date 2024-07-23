@@ -53,4 +53,10 @@ export default abstract class PGSRenderer<T extends HTMLCanvasElement | Offscree
   }
 
   public abstract render(pgs: Readonly<AcquisitionPoint>): void;
+
+  public destroy(): void {
+    this.unregister();
+    this.resize(0, 0);
+    this.detach();
+  }
 }
