@@ -6,9 +6,6 @@ export default class PGSController {
   // Video
   private media: HTMLVideoElement | null = null;
   private container: HTMLElement | null = null;
-  // Canvas
-  private viewerResCanvas: HTMLCanvasElement | null = null;
-  private videoResCanvas: HTMLCanvasElement | null = null;
   // Resize Handler
   private resizeObserver: ResizeObserver | null = null;
   // Timeupdate Handler
@@ -18,13 +15,13 @@ export default class PGSController {
   private readonly onSeekingHandler = this.onSeeking.bind(this);
   private readonly onSeekedHandler = this.onSeeked.bind(this);
   // Renderer
-  private viewerResRenderer: PGSRenderer | null = null;
-  private videoResRenderer: PGSRenderer | null = null;
+  private viewerResRenderer: PGSRenderer<HTMLCanvasElement> | null = null;
+  private videoResRenderer: PGSRenderer<HTMLCanvasElement> | null = null;
   private priviousPts: number | null = null;
   // Feeder
   private feeder: PGSFeeder | null = null;
   // Control
-  private showing: boolean = true;
+  private isShowing: boolean = true;
 
   public attachMedia(media: HTMLVideoElement, container?: HTMLElement): void {
     this.media = media;
@@ -45,24 +42,24 @@ export default class PGSController {
     this.media.addEventListener('seeked', this.onSeekedHandler);
 
     // prepare viewer canvas for absolute plane
-    this.viewerResCanvas = document.createElement('canvas')
-    this.viewerResCanvas.style.position = 'absolute'
-    this.viewerResCanvas.style.top = this.viewerResCanvas.style.left = '0'
-    this.viewerResCanvas.style.pointerEvents = 'none'
-    this.viewerResCanvas.style.width = '100%'
-    this.viewerResCanvas.style.height = '100%'
+    const viewerResCanvas = document.createElement('canvas');
+    viewerResCanvas.style.position = 'absolute';
+    viewerResCanvas.style.top = viewerResCanvas.style.left = '0';
+    viewerResCanvas.style.pointerEvents = 'none';
+    viewerResCanvas.style.width = '100%';
+    viewerResCanvas.style.height = '100%';
 
     // prepare video plane
-    this.videoResCanvas = document.createElement('canvas')
+    const videoResCanvas = document.createElement('canvas');
 
     // setup canvas
-    this.container.appendChild(this.viewerResCanvas);
+    this.container.appendChild(viewerResCanvas);
 
     // prepare Renderer
-    this.viewerResRenderer = new PGSMainThraedRenderer();
-    this.viewerResRenderer.attach(this.viewerResCanvas);
-    this.videoResRenderer = new PGSMainThraedRenderer();
-    this.videoResRenderer.attach(this.videoResCanvas);
+    this.viewerResRenderer = new PGSMainThraedRenderer<HTMLCanvasElement>();
+    this.viewerResRenderer.attach(viewerResCanvas);
+    this.videoResRenderer = new PGSMainThraedRenderer<HTMLCanvasElement>();
+    this.videoResRenderer.attach(videoResCanvas);
 
     // prepare ResizeObserver
     this.resizeObserver = new ResizeObserver(this.onResize.bind(this));
@@ -84,37 +81,22 @@ export default class PGSController {
     }
 
     // remove canvas from container
-    if (this.container && this.viewerResCanvas) {
-      this.container.removeChild(this.viewerResCanvas);
-    }
+    this.viewerResRenderer?.remove();
 
     // cleanup viewer canvas
-    if (this.viewerResCanvas) {
-      this.viewerResCanvas.width = this.viewerResCanvas.height = 0
-      this.viewerResCanvas = null;
-    }
+    this.viewerResRenderer?.resize(0, 0);
+    this.viewerResRenderer?.detach();
+
     // cleanup video canvas
-    if (this.videoResCanvas) {
-      this.videoResCanvas.width = this.videoResCanvas.height = 0;
-      this.videoResCanvas = null;
-    }
+    this.videoResRenderer?.resize(0, 0);
+    this.videoResRenderer?.detach();
   }
 
   private clear() {
-    // clearRect for viewer canvas
-    if (this.viewerResCanvas) {
-      const viewContext = this.viewerResCanvas.getContext('2d')
-      if (viewContext) {
-        viewContext.clearRect(0, 0, this.viewerResCanvas.width, this.viewerResCanvas.height);
-      }
-    }
-    // clearRect for video canvas
-    if (this.videoResCanvas) {
-      const viewContext = this.videoResCanvas.getContext('2d')
-      if (viewContext) {
-        viewContext.clearRect(0, 0, this.videoResCanvas.width, this.videoResCanvas.height);
-      }
-    }
+    // clearRect for viewer
+    this.viewerResRenderer?.clear();
+    // clearRect for video
+    this.videoResRenderer?.clear();
   }
 
   public attachFeeder(feeder: PGSFeeder) {
@@ -127,20 +109,15 @@ export default class PGSController {
 
 
   private onResize() {
-    if (!this.media) { return; }
+    if (this.media == null) { return; }
 
-    // for Canvas Resize
+    // for Resize
     const style = window.getComputedStyle(this.media);
     const media_width = Number.parseInt(style.width, 10);
     const media_height = Number.parseInt(style.height, 10);
-    if (this.viewerResCanvas) {
-      this.viewerResCanvas.width = Math.round(media_width)
-      this.viewerResCanvas.height = Math.round(media_height)
-    }
-    if (this.videoResCanvas) {
-      this.videoResCanvas.width = this.media.videoWidth;
-      this.videoResCanvas.height = this.media.videoHeight;
-    }
+
+    this.viewerResRenderer?.resize(Math.round(media_width), Math.round(media_height));
+    this.videoResRenderer?.resize(this.media.videoWidth, this.media.videoHeight);
 
     // render
     this.onTimeupdate();
@@ -158,12 +135,11 @@ export default class PGSController {
 
   private onTimeupdate() {
     // not showing, do not show
-    if (!this.showing) { return; }
+    if (!this.isShowing) { return; }
     this.timer = requestAnimationFrame(this.onTimeupdateHandler);
 
     // precondition
-    if (!this.media) { return; }
-    if (!this.feeder) { return;}
+    if (this.media == null || this.feeder == null) { return; }
 
     const currentTime = this.media.currentTime;
     const content = this.feeder.content(currentTime) ?? null;
@@ -174,20 +150,15 @@ export default class PGSController {
       return;
     }
 
-    if (this.viewerResCanvas && this.viewerResRenderer) {
-      this.viewerResRenderer.render(content, this.viewerResCanvas);
-    }
-
-    if (this.videoResCanvas && this.videoResRenderer) {
-      this.videoResRenderer.render(content, this.videoResCanvas);
-    }
+    this.viewerResRenderer?.render(content);
+    this.videoResRenderer?.render(content);
 
     this.priviousPts = content.pts;
   }
 
 
   public show(): void {
-    this.showing = true;
+    this.isShowing = true;
     if (this.timer == null) {
       this.timer = requestAnimationFrame(this.onTimeupdateHandler);
     }
@@ -195,7 +166,7 @@ export default class PGSController {
   }
 
   public hide(): void {
-    this.showing = false;
+    this.isShowing = false;
     if (this.timer != null) {
       cancelAnimationFrame(this.timer);
       this.timer = null;
@@ -204,11 +175,11 @@ export default class PGSController {
     this.clear();
   }
 
-  public get mode(): boolean {
-    return this.showing;
+  public showing(): boolean {
+    return this.isShowing;
   }
 
-  public get snapshot(): HTMLCanvasElement | null {
-    return this.videoResCanvas;
+  public snapshot(): HTMLCanvasElement | null {
+    return this.videoResRenderer?.snapshot() ?? null;
   }
 }
