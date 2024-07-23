@@ -129,13 +129,12 @@ export default class PGSController {
   }
 
   private onSeeking() {
-    this.priviousPts = null;
     this.feeder?.onseek();
     this.clear();
   }
 
   private onSeeked() {
-    this.priviousPts = null;
+    this.clear();
   }
 
   private onTimeupdate() {
@@ -151,13 +150,12 @@ export default class PGSController {
     if (content == null) { return; }
 
     // If already rendered, ignore it
-    if (this.priviousPts === content.pts) {
-      return;
-    }
+    if (this.priviousPts === content.pts) { return ; }
 
     this.viewerResRenderer?.render(content);
     this.videoResRenderer?.render(content);
 
+    // Update privious information
     this.priviousPts = content.pts;
   }
 
@@ -176,7 +174,6 @@ export default class PGSController {
       cancelAnimationFrame(this.timer);
       this.timer = null;
     }
-    this.priviousPts = null;
     this.clear();
   }
 
