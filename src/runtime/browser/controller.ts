@@ -52,14 +52,14 @@ export default class PGSController {
     // prepare video plane
     const videoResCanvas = document.createElement('canvas');
 
-    // setup canvas
-    this.container.appendChild(viewerResCanvas);
-
     // prepare Renderer
     this.viewerResRenderer = new PGSMainThraedRenderer<HTMLCanvasElement>();
     this.viewerResRenderer.attach(viewerResCanvas);
     this.videoResRenderer = new PGSMainThraedRenderer<HTMLCanvasElement>();
     this.videoResRenderer.attach(videoResCanvas);
+
+    // setup
+    this.viewerResRenderer.register(this.container);
 
     // prepare ResizeObserver
     this.resizeObserver = new ResizeObserver(this.onResize.bind(this));
@@ -81,7 +81,7 @@ export default class PGSController {
     }
 
     // remove canvas from container
-    this.viewerResRenderer?.remove();
+    this.viewerResRenderer?.unregister();
 
     // cleanup viewer canvas
     this.viewerResRenderer?.resize(0, 0);

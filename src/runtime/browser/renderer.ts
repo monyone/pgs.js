@@ -11,7 +11,14 @@ export default abstract class PGSRenderer<T extends HTMLCanvasElement | Offscree
     return this.canvas;
   }
 
-  public remove(): void {
+  public register(element: HTMLElement): void {
+    if (this.canvas == null) { return; }
+    if (!(this.canvas instanceof HTMLCanvasElement)) { return; }
+
+    element.appendChild(this.canvas);
+  }
+
+  public unregister(): void {
     if (this.canvas == null) { return; }
     if (!(this.canvas instanceof HTMLCanvasElement)) { return; }
 
