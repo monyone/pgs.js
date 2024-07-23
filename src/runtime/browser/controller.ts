@@ -97,6 +97,8 @@ export default class PGSController {
     this.viewerResRenderer?.clear();
     // clearRect for video
     this.videoResRenderer?.clear();
+    // clear privious information
+    this.priviousPts = null;
   }
 
   public attachFeeder(feeder: PGSFeeder) {
@@ -113,11 +115,14 @@ export default class PGSController {
 
     // for Resize
     const style = window.getComputedStyle(this.media);
-    const media_width = Number.parseInt(style.width, 10);
-    const media_height = Number.parseInt(style.height, 10);
+    const width = Number.parseInt(style.width, 10);
+    const height = Number.parseInt(style.height, 10);
 
-    this.viewerResRenderer?.resize(Math.round(media_width), Math.round(media_height));
+    this.viewerResRenderer?.resize(Math.round(width), Math.round(height));
     this.videoResRenderer?.resize(this.media.videoWidth, this.media.videoHeight);
+
+    // clear
+    this.clear();
 
     // render
     this.onTimeupdate();
