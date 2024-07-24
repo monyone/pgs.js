@@ -1,6 +1,7 @@
 import { AcquisitionPoint } from "../../pgs/type";
 
 import PGSRenderer from "./renderer";
+import { PGSRenderOption } from "./renderer-option";
 import { renderByOption } from "./renderer-utils";
 import { FromMainToWorkerEventRender, FromWorkerToMainEvent } from "./renderer-worker.event";
 import DecodeWorker from "./renderer-worker.worker?worker&inline";
@@ -9,8 +10,8 @@ export default class PGSWorkerThraedRenderer<T extends HTMLCanvasElement | Offsc
   private worker: Worker;
   private readonly renderedHandler = this.rendered.bind(this);
 
-  public constructor() {
-    super();
+  public constructor(option?: Partial<PGSRenderOption>) {
+    super(option);
     this.worker = new DecodeWorker();
     this.worker.addEventListener('message', this.renderedHandler);
   }

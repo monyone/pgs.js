@@ -1,9 +1,13 @@
 import PGSFeeder from "../common/feeder";
+import { PGSControllerOption } from "./controller-option";
 import PGSRenderer from "./renderer";
 import PGSMainThraedRenderer from "./renderer-main";
+import { PGSRenderOption } from "./renderer-option";
 import PGSWorkerThraedRenderer from "./renderer-worker";
 
 export default class PGSController {
+  // Option
+  private option: PGSControllerOption;
   // Video
   private media: HTMLVideoElement | null = null;
   private container: HTMLElement | null = null;
@@ -23,6 +27,13 @@ export default class PGSController {
   private feeder: PGSFeeder | null = null;
   // Control
   private isShowing: boolean = true;
+
+  public constructor(option?: Partial<PGSControllerOption>) {
+    this.option = {
+      ... option,
+      renderOption: PGSRenderOption.from(option?.renderOption)
+    }
+  }
 
   public attachMedia(media: HTMLVideoElement, container?: HTMLElement): void {
     this.media = media;
@@ -54,9 +65,9 @@ export default class PGSController {
     const videoResCanvas = document.createElement('canvas');
 
     // prepare Renderer
-    this.viewerResRenderer = new PGSWorkerThraedRenderer<HTMLCanvasElement>();
+    this.viewerResRenderer = new PGSWorkerThraedRenderer<HTMLCanvasElement>(this.option.renderOption);
     this.viewerResRenderer.attach(viewerResCanvas);
-    this.videoResRenderer = new PGSMainThraedRenderer<HTMLCanvasElement>();
+    this.videoResRenderer = new PGSMainThraedRenderer<HTMLCanvasElement>(this.option.renderOption);
     this.videoResRenderer.attach(videoResCanvas);
 
     // setup

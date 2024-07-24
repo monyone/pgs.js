@@ -5,7 +5,7 @@ export type PGSRenderOption = {
 export const PGSRenderOption = {
   from (option?: Partial<PGSRenderOption>): PGSRenderOption {
     return {
-      objectFit: 'fill',
+      objectFit: 'contain',
       ... option,
     };
   }

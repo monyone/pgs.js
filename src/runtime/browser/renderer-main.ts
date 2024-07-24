@@ -3,8 +3,13 @@ import { AcquisitionPoint } from "../../pgs/type";
 import PGSRenderer from "./renderer";
 import decode from "./decoder";
 import { renderByOption } from "./renderer-utils";
+import { PGSRenderOption } from "./renderer-option";
 
 export default class PGSMainThraedRenderer<T extends HTMLCanvasElement | OffscreenCanvas> extends PGSRenderer<T> {
+
+  public constructor(option?: Partial<PGSRenderOption>) {
+    super(option);
+  }
 
   public render(pgs: Readonly<AcquisitionPoint>): void {
     if (this.canvas == null) { return; }
