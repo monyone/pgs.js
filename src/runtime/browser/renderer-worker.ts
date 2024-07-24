@@ -32,8 +32,10 @@ export default class PGSWorkerThraedRenderer<T extends HTMLCanvasElement | Offsc
         bitmap.close();
         break;
       }
-      default:
-        break;
+      default: {
+        const exhaustive: never = event.data.type;
+        throw new Error(`Exhaustive check: ${exhaustive} reached!`);
+      }
     }
   }
 

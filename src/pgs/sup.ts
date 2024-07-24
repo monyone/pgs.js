@@ -62,6 +62,8 @@ export default (sup: ArrayBuffer): TimestampedSegment[] => {
             timescale,
           });
           break;
+        default:
+          break;
       }
     }
   } catch(e) {

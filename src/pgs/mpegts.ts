@@ -59,6 +59,8 @@ export default (pes: ArrayBuffer, pts: number, dts: number): TimestampedSegment[
             timescale,
           });
           break;
+        default:
+          break;
       }
     }
   } catch(e) {
