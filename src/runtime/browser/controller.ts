@@ -1,9 +1,8 @@
 import PGSFeeder from "../common/feeder";
 import { PGSControllerOption } from "./controller-option";
 import PGSRenderer from "./renderer";
-import PGSMainThraedRenderer from "./renderer-main";
 import { PGSRenderOption } from "./renderer-option";
-import PGSWorkerThraedRenderer from "./renderer-worker";
+import { selectRendererByOption } from "./renderer-utils";
 
 export default class PGSController {
   // Option
@@ -65,9 +64,9 @@ export default class PGSController {
     const videoResCanvas = document.createElement('canvas');
 
     // prepare Renderer
-    this.viewerResRenderer = new PGSWorkerThraedRenderer<HTMLCanvasElement>(this.option.renderOption);
+    this.viewerResRenderer = selectRendererByOption(this.option.renderOption);
     this.viewerResRenderer.attach(viewerResCanvas);
-    this.videoResRenderer = new PGSMainThraedRenderer<HTMLCanvasElement>(this.option.renderOption);
+    this.videoResRenderer = selectRendererByOption(this.option.renderOption);
     this.videoResRenderer.attach(videoResCanvas);
 
     // setup

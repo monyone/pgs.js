@@ -2,7 +2,7 @@ import { AcquisitionPoint } from "../../pgs/type";
 
 import PGSRenderer from "./renderer";
 import decode from "./decoder";
-import { renderByOption } from "./renderer-utils";
+import { darwImageByOption } from "./renderer-utils";
 import { PGSRenderOption } from "./renderer-option";
 
 export default class PGSMainThraedRenderer<T extends HTMLCanvasElement | OffscreenCanvas> extends PGSRenderer<T> {
@@ -22,7 +22,7 @@ export default class PGSMainThraedRenderer<T extends HTMLCanvasElement | Offscre
     const source = decode(pgs);
     if (!source) { return; }
 
-    renderByOption(source, this.canvas, this.option);
+    darwImageByOption(source, this.canvas, this.option);
     source.width = source.height = 0;
   }
 }
