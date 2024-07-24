@@ -6,7 +6,7 @@ export type PGSRenderOption = {
 export const PGSRenderOption = {
   from (option?: Partial<PGSRenderOption>): PGSRenderOption {
     return {
-      objectFit: 'contain',
+      objectFit: 'fill',
       webWorker: false,
       ... option,
     };

@@ -17,13 +17,13 @@ export type FromMainToWorkerEvent = FromMainToWorkerEventRender;
 
 export type FromWorkerToMainEventRendered = {
   type: 'rendered';
-  bitmap: ImageBitmap
+  bitmap: ImageBitmap | null
 }
 export const FromWorkerToMainEventRendered = {
-  from (bitmap: ImageBitmap): FromWorkerToMainEventRendered {
+  from (bitmap?: ImageBitmap | null): FromWorkerToMainEventRendered {
     return {
       type: 'rendered',
-      bitmap
+      bitmap: bitmap ?? null
     };
   }
 }

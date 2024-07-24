@@ -10,8 +10,6 @@ export default class PGSController {
   // Video
   private media: HTMLVideoElement | null = null;
   private container: HTMLElement | null = null;
-  // Resize Handler
-  private resizeObserver: ResizeObserver | null = null;
   // Timeupdate Handler
   private readonly onTimeupdateHandler = this.onTimeupdate.bind(this);
   private timer: number | null = null;
@@ -48,7 +46,7 @@ export default class PGSController {
   private setup() {
     if (!this.media || !this.container) { return; }
 
-    // setup media seeking handler
+    // setup media handler
     this.media.addEventListener('seeking', this.onSeekingHandler);
     this.media.addEventListener('seeked', this.onSeekedHandler);
 
@@ -72,10 +70,8 @@ export default class PGSController {
     // setup
     this.viewerResRenderer.register(this.container);
 
-    // prepare ResizeObserver
-    this.resizeObserver = new ResizeObserver(this.onResize.bind(this));
-    this.resizeObserver.observe(this.media);
-    this.onResize();
+    // prepare Event Loop
+    this.onTimeupdate();
   }
 
   private cleanup() {
@@ -83,12 +79,6 @@ export default class PGSController {
     if (this.media) {
       this.media.removeEventListener('seeking', this.onSeekingHandler);
       this.media.removeEventListener('seeked', this.onSeekedHandler);
-    }
-
-    // cleanup ResizeObserver
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-      this.resizeObserver = null;
     }
 
     // cleanup viewer canvas
@@ -115,24 +105,6 @@ export default class PGSController {
     this.feeder = null;
   }
 
-
-  private onResize() {
-    if (this.media == null) { return; }
-
-    // for Resize
-    const style = window.getComputedStyle(this.media);
-    const width = Number.parseInt(style.width, 10);
-    const height = Number.parseInt(style.height, 10);
-
-    this.viewerResRenderer?.resize(Math.round(width), Math.round(height));
-    this.videoResRenderer?.resize(this.media.videoWidth, this.media.videoHeight);
-
-    // clear
-    this.clear();
-
-    // render
-    this.onTimeupdate();
-  }
 
   private onSeeking() {
     this.feeder?.onseek();
@@ -171,7 +143,7 @@ export default class PGSController {
     if (this.timer == null) {
       this.timer = requestAnimationFrame(this.onTimeupdateHandler);
     }
-    this.onResize();
+    this.onTimeupdate();
   }
 
   public hide(): void {

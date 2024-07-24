@@ -6,7 +6,10 @@ self.addEventListener('message', (event: MessageEvent<FromMainToWorkerEvent>) =>
     case 'render': {
       const { pgs } = event.data;
       const source = decode(pgs) as OffscreenCanvas | null; // Omit HTMLCanvasElement does not in WebWorker!
-      if (!source) { return; }
+      if (!source) {
+        (self as any).postMessage(FromWorkerToMainEventRendered.from());
+        return;
+      }
 
       const bitmap = source.transferToImageBitmap();
       (self as any).postMessage(FromWorkerToMainEventRendered.from(bitmap), [bitmap]);

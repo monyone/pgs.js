@@ -27,10 +27,19 @@ export default class PGSWorkerThraedRenderer<T extends HTMLCanvasElement | Offsc
         const context = this.getContext2D();
         if (!context) { return; }
 
-        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
         const { bitmap } = event.data;
+        if (bitmap == null) {
+          context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          return;
+        }
+
+        if (this.canvas.width !== bitmap.width || this.canvas.height !== bitmap.width) {
+          this.canvas.width = bitmap.width;
+          this.canvas.height = bitmap.height;
+        }
+        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         darwImageByOption(bitmap, this.canvas, this.option);
+
         bitmap.close();
         break;
       }

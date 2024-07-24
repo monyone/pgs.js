@@ -17,12 +17,20 @@ export default class PGSMainThraedRenderer<T extends HTMLCanvasElement | Offscre
     // Omit False Positive ImageBitmapRenderingContext type
     const context = this.getContext2D();
     if (!context) { return; }
-    context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     const source = decode(pgs);
-    if (!source) { return; }
+    if (!source) {
+      context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      return;
+    }
 
+    if (this.canvas.width !== source.width || this.canvas.height !== source.width) {
+      this.canvas.width = source.width;
+      this.canvas.height = source.height;
+    }
+    context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     darwImageByOption(source, this.canvas, this.option);
+
     source.width = source.height = 0;
   }
 }
