@@ -1,7 +1,13 @@
 import { AcquisitionPoint } from "../../pgs/type";
+import { RenderOption } from "./renderer-option";
 
 export default abstract class PGSRenderer<T extends HTMLCanvasElement | OffscreenCanvas> {
+  protected option: RenderOption;
   protected canvas: T | null = null;
+
+  public constructor(option?: Partial<RenderOption>) {
+    this.option = RenderOption.from(option);
+  }
 
   public attach(canvas: T): void {
     this.canvas = canvas;

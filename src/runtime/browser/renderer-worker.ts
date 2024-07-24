@@ -1,6 +1,7 @@
 import { AcquisitionPoint } from "../../pgs/type";
 
 import PGSRenderer from "./renderer";
+import { renderByOption } from "./renderer-utils";
 import { FromMainToWorkerEventRender, FromWorkerToMainEvent } from "./renderer-worker.event";
 import DecodeWorker from "./renderer-worker.worker?worker&inline";
 
@@ -28,7 +29,7 @@ export default class PGSWorkerThraedRenderer<T extends HTMLCanvasElement | Offsc
         context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         const { bitmap } = event.data;
-        context.drawImage(bitmap, 0, 0, this.canvas.width, this.canvas.height);
+        renderByOption(bitmap, this.canvas, this.option);
         bitmap.close();
         break;
       }
