@@ -1,9 +1,9 @@
-export type RenderOption = {
+export type PGSRenderOption = {
   objectFit: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down';
 }
 
-export const RenderOption = {
-  from (option?: Partial<RenderOption>): RenderOption {
+export const PGSRenderOption = {
+  from (option?: Partial<PGSRenderOption>): PGSRenderOption {
     return {
       objectFit: 'fill',
       ... option,

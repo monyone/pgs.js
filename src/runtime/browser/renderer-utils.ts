@@ -1,4 +1,4 @@
-import { RenderOption } from "./renderer-option";
+import { PGSRenderOption } from "./renderer-option";
 
 export const getContext2D = (src: HTMLCanvasElement | OffscreenCanvas): CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null => {
   if (src == null) { return null; }
@@ -7,7 +7,7 @@ export const getContext2D = (src: HTMLCanvasElement | OffscreenCanvas): CanvasRe
   return src.getContext('2d') as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
 }
 
-export const renderByOption = (src: HTMLCanvasElement | OffscreenCanvas | ImageBitmap, dst: HTMLCanvasElement | OffscreenCanvas, option: RenderOption): void => {
+export const renderByOption = (src: HTMLCanvasElement | OffscreenCanvas | ImageBitmap, dst: HTMLCanvasElement | OffscreenCanvas, option: PGSRenderOption): void => {
   const context = getContext2D(dst);
   if (context == null) { return; }
 
