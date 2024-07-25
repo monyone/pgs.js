@@ -1,4 +1,6 @@
 import ByteStream from "../util/bytestream";
+import concat from "../util/concat";
+import ycbcr from "../util/ycbcr";
 import ValidationError from "./error";
 
 export const SegmentType = {
@@ -279,6 +281,80 @@ export const ObjectDefinitionSegment = {
   }
 }
 
+export type DecodedObjectDefinitionSegment = {
+  objectId: number;
+  objectVersionNumber: number;
+  objectDataLength: number;
+  width: number;
+  height: number;
+  rgba: Uint8ClampedArray;
+}
+export const DecodedObjectDefinitionSegment = {
+  from(palette: PaletteDefinitionSegment, objects: ObjectDefinitionSegment[]): DecodedObjectDefinitionSegment | null {
+    const firstInSequence = objects.find((object) => ObjectDefinitionSegment.isFirstInSequence(object));
+    if (firstInSequence == null) { return null; }
+
+    const { width, height } = firstInSequence;
+    const rgba = new Uint8ClampedArray(width * height * 4); // RGBA
+    const stream = new ByteStream(concat(... objects.map((object) => object.objectData)));
+
+    {
+      let offset = 0;
+      while (!stream.isEmpty()) {
+        const first = stream.readU8();
+        let color: PaletteEntry | null = null;
+        let length = 1;
+
+        if (first !== 0) {
+          color = palette.paletteEntries[first];
+        } else {
+          const second = stream.readU8();
+          if (second === 0) { continue; }
+
+          const color_flag = (second & 0x80) !== 0;
+          const length_flag = (second & 0x40) !== 0;
+
+          length = length_flag ? (second & 0x3F) * 2**8 + stream.readU8() : (second & 0x3F);
+          color = color_flag ? palette.paletteEntries[stream.readU8()] : palette.paletteEntries[0];
+        }
+
+        if (color == null) { offset += length; continue; }
+
+        const [r, g, b] = ycbcr(color.luminance, color.colorDifferenceBlue, color.colorDifferenceRed);
+        for (let i = 0; i < length; i++) {
+          rgba[offset * 4 + 0] = r; // R
+          rgba[offset * 4 + 1] = g; // G
+          rgba[offset * 4 + 2] = b; // B
+          rgba[offset * 4 + 3] = color.transparency;
+          offset += 1;
+        }
+      }
+    }
+
+    return {
+      objectId: firstInSequence.objectId,
+      objectVersionNumber: firstInSequence.objectVersionNumber,
+      objectDataLength: firstInSequence.objectDataLength,
+      width,
+      height,
+      rgba
+    };
+  },
+  valueOf(palette: PaletteDefinitionSegment, definision?: ObjectDefinitionSegment[]): Map<number, DecodedObjectDefinitionSegment> {
+    const objects = new Map<number, DecodedObjectDefinitionSegment>();
+
+    for (const objs of ObjectDefinitionSegment.valueOf(definision).values()) {
+      const decoded = DecodedObjectDefinitionSegment.from(palette, objs);
+      if (decoded == null) { continue; }
+
+      objects.set(decoded.objectId, decoded);
+    }
+
+    return objects;
+  }
+}
+
+
 export type Segment = {
   type: typeof SegmentType.PDS;
   segment: PaletteDefinitionSegment;
@@ -324,7 +400,7 @@ type DisplaySetSelfContained = {
   composition: PresentationCompositionSegment;
   palette: PaletteDefinitionSegment;
   windows: Map<number, WindowDefinition>;
-  objects: Map<number, ObjectDefinitionSegment[]>;
+  objects: Map<number, ObjectDefinitionSegment[]> | Map<number, DecodedObjectDefinitionSegment>;
 }
 export type DisplaySet = {
   pts: number;

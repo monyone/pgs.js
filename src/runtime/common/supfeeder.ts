@@ -5,21 +5,31 @@ import convertAcquisitionPoint from '../../pgs/acquisitionpoint';
 
 import PGSFeeder from './feeder';
 
-export default class PGSSupFeeder implements PGSFeeder {
-  private acquisitions: Readonly<AcquisitionPoint>[];
-  private timeshift: number;
+export type PGSFeederOption = {
+  preload: boolean
+  timeshift: number
+}
 
-  public constructor(sup: ArrayBuffer, timeshift: number = 0) {
+export default class PGSSupFeeder implements PGSFeeder {
+  private option: PGSFeederOption;
+  private acquisitions: Readonly<AcquisitionPoint>[];
+
+  public constructor(sup: ArrayBuffer, option?: Partial<PGSFeederOption>) {
+    this.option = {
+      preload: false,
+      timeshift: 0,
+      ... option
+    };
+
     const segments = readFromSup(sup);
     const displays = collectDisplaySet(segments);
-    const acquisitions = convertAcquisitionPoint(displays);
+    const acquisitions = convertAcquisitionPoint(displays, this.option.preload);
 
     this.acquisitions = acquisitions;
-    this.timeshift = timeshift;
   }
 
   public content(time: number): Readonly<AcquisitionPoint> | null {
-    time -= this.timeshift;
+    time -= this.option.timeshift;
 
     {
       const first = this.acquisitions[0];
