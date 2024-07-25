@@ -21,7 +21,7 @@ const preferOffscreenCanvas = (width: number, height: number): OffscreenCanvas |
 const decodeObject = (palette: PaletteDefinitionSegment, object: ObjectDefinitionSegment[]): ImageData | null => {
   if (object.length === 0) { return null; }
 
-  const stream = new ByteStream(concat(object.map((obj) => obj.objectData)));
+  const stream = new ByteStream(concat(... object.map((obj) => obj.objectData)));
   const firstInSequence = object.find((obj) => ObjectDefinitionSegment.isFirstInSequence(obj));
   if (firstInSequence == null) { return null; }
   const { width, height } = firstInSequence;
