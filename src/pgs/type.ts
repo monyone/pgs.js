@@ -454,33 +454,7 @@ export const TimestampedSegment = {
     while(!stream.isEmpty()) {
       yield this.fromMpegTSFormat(stream, pts, dts);
     }
-  },
-  *aggregate(iterator: Iterable<TimestampedSegment>): Iterable<TimestampedSegment[]> {
-    let segments: TimestampedSegment[] = [];
-
-    for (const segment of iterator) {
-      if (segment.type !== SegmentType.END) {
-        segments.push(segment);
-      } else {
-        yield segments;
-        segments = [];
-      }
-    }
-    if (segments.length > 0) { yield segments; }
-  },
-  async *aggregateAsync(iterator: AsyncIterable<TimestampedSegment>): AsyncIterable<TimestampedSegment[]> {
-    let segments: TimestampedSegment[] = [];
-
-    for await (const segment of iterator) {
-      if (segment.type !== SegmentType.END) {
-        segments.push(segment);
-      } else {
-        yield segments;
-        segments = [];
-      }
-    }
-    if (segments.length > 0) { yield segments; }
-  },
+  }
 }
 
 type DisplaySetRequiredSegment = {
@@ -554,15 +528,31 @@ export const DisplaySet = {
       };
     }
   },
-  *iterate(iterator: Iterable<TimestampedSegment[]>): Iterable<DisplaySet> {
-    for (const segments of iterator) {
-      yield this.from(segments);
+  *aggregate(iterator: Iterable<TimestampedSegment>): Iterable<DisplaySet> {
+    let segments: TimestampedSegment[] = [];
+
+    for (const segment of iterator) {
+      if (segment.type !== SegmentType.END) {
+        segments.push(segment);
+      } else {
+        yield this.from(segments);
+        segments = [];
+      }
     }
+    if (segments.length > 0) { yield this.from(segments); }
   },
-  async *iterateAsync(iterator: AsyncIterable<TimestampedSegment[]>): AsyncIterable<DisplaySet> {
-    for await (const segments of iterator) {
-      yield this.from(segments);
+  async *aggregateAsync(iterator: AsyncIterable<TimestampedSegment>): AsyncIterable<DisplaySet> {
+    let segments: TimestampedSegment[] = [];
+
+    for await (const segment of iterator) {
+      if (segment.type !== SegmentType.END) {
+        segments.push(segment);
+      } else {
+        yield this.from(segments);
+        segments = [];
+      }
     }
+    if (segments.length > 0) { yield this.from(segments); }
   },
 }
 

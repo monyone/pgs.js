@@ -18,7 +18,7 @@ export default class PGSSupFeeder implements PGSFeeder {
       ... option
     };
 
-    this.acquisitions = Array.from(AcquisitionPoint.iterate(DisplaySet.iterate(TimestampedSegment.aggregate(TimestampedSegment.iterateSupFormat(sup))), this.option.preload));
+    this.acquisitions = Array.from(AcquisitionPoint.iterate(DisplaySet.aggregate(TimestampedSegment.iterateSupFormat(sup)), this.option.preload));
   }
 
   public content(time: number): Readonly<AcquisitionPoint> | null {
