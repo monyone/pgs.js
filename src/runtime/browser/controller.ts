@@ -57,6 +57,7 @@ export default class PGSController {
     viewerResCanvas.style.pointerEvents = 'none';
     viewerResCanvas.style.width = '100%';
     viewerResCanvas.style.height = '100%';
+    viewerResCanvas.style.objectFit = 'contain';
 
     // prepare video plane
     const videoResCanvas = document.createElement('canvas');
