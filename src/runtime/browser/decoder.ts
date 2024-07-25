@@ -1,4 +1,4 @@
-import { AcquisitionPoint, DecodedObjectDefinitionSegment, ObjectDefinitionSegment, PaletteDefinitionSegment } from "../../pgs/type";
+import { AcquisitionPoint, DecodedObjectDefinitionSegment, ObjectDefinitionSegment, PaletteDefinitionSegment } from "../../pgs/common/type";
 
 export const preferOffscreenCanvas = (width: number, height: number): OffscreenCanvas | HTMLCanvasElement | null => {
   if (typeof OffscreenCanvas !== 'undefined') {

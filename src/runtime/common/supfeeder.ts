@@ -1,7 +1,5 @@
-import { AcquisitionPoint } from '../../pgs/type'
+import { AcquisitionPoint, DisplaySet, TimestampedSegment } from '../../pgs/common/type'
 import readFromSup from '../../pgs/sup';
-import collectDisplaySet from '../../pgs/displayset';
-import convertAcquisitionPoint from '../../pgs/acquisitionpoint';
 
 import PGSFeeder from './feeder';
 
@@ -21,11 +19,7 @@ export default class PGSSupFeeder implements PGSFeeder {
       ... option
     };
 
-    const segments = readFromSup(sup);
-    const displays = collectDisplaySet(segments);
-    const acquisitions = convertAcquisitionPoint(displays, this.option.preload);
-
-    this.acquisitions = acquisitions;
+    this.acquisitions = Array.from(AcquisitionPoint.iterate(DisplaySet.iterate(TimestampedSegment.aggregate(readFromSup(sup)))));
   }
 
   public content(time: number): Readonly<AcquisitionPoint> | null {

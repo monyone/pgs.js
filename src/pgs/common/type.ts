@@ -1,6 +1,6 @@
-import ByteStream from "../util/bytestream";
-import concat from "../util/concat";
-import ycbcr from "../util/ycbcr";
+import { ByteStream } from "../../util/bytestream";
+import concat from "../../util/concat";
+import ycbcr from "../../util/ycbcr";
 import ValidationError from "./error";
 
 export const SegmentType = {
@@ -376,10 +376,38 @@ export type TimestampedSegment = Segment & {
   dts: number;
   timescale: number;
 };
+export const TimestampedSegment = {
+  *aggregate(iterator: Iterable<TimestampedSegment>): Iterable<TimestampedSegment[]> {
+    let segments: TimestampedSegment[] = [];
+
+    for (const segment of iterator) {
+      if (segment.type !== SegmentType.END) {
+        segments.push(segment);
+      } else {
+        yield segments;
+        segments = [];
+      }
+    }
+    if (segments.length > 0) { yield segments; }
+  },
+  async *aggregateAsync(iterator: AsyncIterable<TimestampedSegment>): AsyncIterable<TimestampedSegment[]> {
+    let segments: TimestampedSegment[] = [];
+
+    for await (const segment of iterator) {
+      if (segment.type !== SegmentType.END) {
+        segments.push(segment);
+      } else {
+        yield segments;
+        segments = [];
+      }
+    }
+    if (segments.length > 0) { yield segments; }
+  },
+}
 
 type DisplaySetRequiredSegment = {
   PCS: PresentationCompositionSegment;
-}
+};
 
 type DisplaySetOptionalSegments = {
   PDS: PaletteDefinitionSegment;
@@ -408,11 +436,134 @@ export type DisplaySet = {
 } & (
   DisplaySetIntraInformation | DisplaySetNormalInformation
 );
+export const DisplaySet = {
+  from(segments: TimestampedSegment[]): DisplaySet {
+    const pcses = segments.filter((segment) => segment.type === SegmentType.PCS);
+    if (pcses.length === 0) {
+      throw new ValidationError('PCS not Found!');
+    } else if (pcses.length >= 2) {
+      throw new ValidationError('Duplicated PCS in DisplaySet!');
+    }
+    const pcs = pcses[0];
+
+    const pds = segments.filter((segment) => segment.type === SegmentType.PDS).find(segment => segment.segment.paletteID === pcs.segment.paletteId);
+    const wds = segments.filter((segment) => segment.type === SegmentType.WDS)[0];
+    const odses = segments.filter((segment) => segment.type === SegmentType.ODS);
+
+    if (pcs.segment.compositionState == CompositionState.Normal) {
+      return {
+        pts: pcs.pts,
+        timescale: pcs.timescale,
+        compositionState: pcs.segment.compositionState,
+        PCS: pcs.segment,
+        PDS: pds?.segment,
+        WDS: wds?.segment,
+        ODS: odses.map(ods => ods.segment)
+      };
+    } else {
+      if (pds == null) {
+        throw new ValidationError('PDS not Found!');
+      }
+
+      return {
+        pts: pcs.pts,
+        timescale: pcs.timescale,
+        compositionState: pcs.segment.compositionState,
+        PCS: pcs.segment,
+        PDS: pds.segment,
+        WDS: wds.segment,
+        ODS: odses.map(ods => ods.segment)
+      };
+    }
+  },
+  *iterate(iterator: Iterable<TimestampedSegment[]>): Iterable<DisplaySet> {
+    for (const segments of iterator) {
+      yield this.from(segments);
+    }
+  },
+  async *iterateAsync(iterator: AsyncIterable<TimestampedSegment[]>): AsyncIterable<DisplaySet> {
+    for await (const segments of iterator) {
+      yield this.from(segments);
+    }
+  },
+}
 
 export type AcquisitionPoint = {
   pts: number;
   timescale: number;
 } & DisplaySetSelfContained;
+export const AcquisitionPoint = {
+  from(displaysets: DisplaySet[], decode = false): AcquisitionPoint[] {
+    const firstCompositionState = displaysets.at(0)?.PCS.compositionState;
+    if (firstCompositionState == null || firstCompositionState === CompositionState.Normal) {
+      throw new ValidationError('first compositionState is not Acquisition');
+    }
+
+    const acquisitions: AcquisitionPoint[] = [];
+    for (const displayset of displaysets) {
+      const composition = displayset.PCS;
+      const palette = displaysets.map((set) => set.PDS).filter((pds) => pds != null).find((pds) => pds.paletteID === composition.paletteId);
+      if (palette == null) { throw new ValidationError('palette not found!'); }
+
+      if (composition.compositionObjects.length === 0) { // End of Epoch
+        acquisitions.push({
+          pts: displayset.pts,
+          timescale: displayset.timescale,
+          compositionState: displayset.compositionState,
+          composition,
+          palette,
+          windows: new Map<number, WindowDefinition>(),
+          objects: new Map<number, ObjectDefinitionSegment[]>(),
+        });
+        continue;
+      }
+
+      const windows = WindowDefinitionSegment.valueOf(displaysets.flatMap((set) => set.WDS).filter(set => set != null));
+      const ods = displaysets.flatMap((set) => set.ODS).filter(set => set != null);
+      const objects = decode ? DecodedObjectDefinitionSegment.valueOf(palette, ods) : ObjectDefinitionSegment.valueOf(ods);
+
+      acquisitions.push({
+        pts: displayset.pts,
+        timescale: displayset.timescale,
+        compositionState: displayset.compositionState,
+        composition,
+        palette,
+        windows,
+        objects,
+      });
+    }
+
+    return acquisitions;
+  },
+  *iterate(iterator: Iterable<DisplaySet>, decode = false): Iterable<AcquisitionPoint> {
+    let displaysets: DisplaySet[] = [];
+
+    for (const displayset of iterator) {
+      if (displayset.PCS.compositionState !== CompositionState.Normal) {
+        if (displaysets.length > 0) {
+          yield* AcquisitionPoint.from(displaysets, decode);
+        }
+        displaysets = [];
+      }
+      displaysets.push(displayset);
+    }
+    if (displaysets.length > 0) { yield* AcquisitionPoint.from(displaysets); }
+  },
+  async *iterateAsync(iterator: AsyncIterable<DisplaySet>): AsyncIterable<AcquisitionPoint> {
+    let displaysets: DisplaySet[] = [];
+
+    for await (const displayset of iterator) {
+      if (displayset.PCS.compositionState !== CompositionState.Normal) {
+        if (displaysets.length > 0) {
+          yield* AcquisitionPoint.from(displaysets);
+        }
+        displaysets = [];
+      }
+      displaysets.push(displayset);
+    }
+    if (displaysets.length > 0) { yield* AcquisitionPoint.from(displaysets); }
+  },
+}
 
 export type Epoch = {
   displaySets: DisplaySetSelfContained[];

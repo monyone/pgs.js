@@ -1,7 +1,7 @@
-import ByteStream from "../util/bytestream"
+import { ByteStream } from "../util/bytestream"
 import EOFError from "../util/eof";
-import ValidationError from "./error";
-import { ObjectDefinitionSegment, PaletteDefinitionSegment, PresentationCompositionSegment, TimestampedSegment, SegmentType, WindowDefinitionSegment } from "./type"
+import ValidationError from "./common/error";
+import { ObjectDefinitionSegment, PaletteDefinitionSegment, PresentationCompositionSegment, TimestampedSegment, SegmentType, WindowDefinitionSegment } from "./common/type"
 
 export default (pes: ArrayBuffer, pts: number, dts: number): TimestampedSegment[] => {
   const stream = new ByteStream(pes);

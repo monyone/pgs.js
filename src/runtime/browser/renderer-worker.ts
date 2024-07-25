@@ -1,4 +1,4 @@
-import { AcquisitionPoint } from "../../pgs/type";
+import { AcquisitionPoint } from "../../pgs/common/type";
 
 import PGSRenderer from "./renderer";
 import { PGSRenderOption } from "./renderer-option";
