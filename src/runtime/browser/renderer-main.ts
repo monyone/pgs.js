@@ -1,4 +1,4 @@
-import { AcquisitionPoint } from "../../pgs/common/type";
+import { AcquisitionPoint } from "../../pgs/type";
 
 import PGSRenderer from "./renderer";
 import decode, { preferHTMLCanvasElement, preferOffscreenCanvas } from "./decoder";

@@ -1,5 +1,4 @@
-import { AcquisitionPoint, DisplaySet, TimestampedSegment } from '../../pgs/common/type'
-import readFromSup from '../../pgs/sup';
+import { AcquisitionPoint, DisplaySet, TimestampedSegment } from '../../pgs/type'
 
 import PGSFeeder from './feeder';
 
@@ -19,7 +18,7 @@ export default class PGSSupFeeder implements PGSFeeder {
       ... option
     };
 
-    this.acquisitions = Array.from(AcquisitionPoint.iterate(DisplaySet.iterate(TimestampedSegment.aggregate(readFromSup(sup)))));
+    this.acquisitions = Array.from(AcquisitionPoint.iterate(DisplaySet.iterate(TimestampedSegment.aggregate(TimestampedSegment.iterateSupFormat(sup))), this.option.preload));
   }
 
   public content(time: number): Readonly<AcquisitionPoint> | null {

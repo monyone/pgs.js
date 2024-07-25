@@ -1,6 +1,6 @@
-import { ByteStream } from "../../util/bytestream";
-import concat from "../../util/concat";
-import ycbcr from "../../util/ycbcr";
+import { ByteStream } from "../util/bytestream";
+import concat from "../util/concat";
+import ycbcr from "../util/ycbcr";
 import ValidationError from "./error";
 
 export const SegmentType = {
@@ -354,7 +354,6 @@ export const DecodedObjectDefinitionSegment = {
   }
 }
 
-
 export type Segment = {
   type: typeof SegmentType.PDS;
   segment: PaletteDefinitionSegment;
@@ -370,13 +369,92 @@ export type Segment = {
 } | {
   type: typeof SegmentType.END
 };
+export const Segment = {
+  from(stream: ByteStream): Segment {
+    const segmentType = stream.readU8();
+    const segmentSize = stream.readU16();
 
+    switch (segmentType) {
+      case SegmentType.PDS:
+        return {
+          type: SegmentType.PDS,
+          segment: PaletteDefinitionSegment.from(new ByteStream(stream.read(segmentSize))),
+        };
+      case SegmentType.ODS:
+        return {
+          type: SegmentType.ODS,
+          segment: ObjectDefinitionSegment.from(new ByteStream(stream.read(segmentSize))),
+        };
+      case SegmentType.PCS:
+        return {
+          type: SegmentType.PCS,
+          segment: PresentationCompositionSegment.from(new ByteStream(stream.read(segmentSize))),
+        };
+      case SegmentType.WDS:
+        return {
+          type: SegmentType.WDS,
+          segment: WindowDefinitionSegment.from(new ByteStream(stream.read(segmentSize))),
+        };
+      case SegmentType.END:
+        return {
+          type: SegmentType.END,
+        };
+      default:
+        throw new ValidationError(`Unrecognized SegmentType: ${segmentType}`);
+    }
+  }
+}
+
+export const MultiplexMethod = {
+  SUP: 'SUP',
+  MPEGTS: 'MPEGTS',
+};
 export type TimestampedSegment = Segment & {
   pts: number;
   dts: number;
   timescale: number;
 };
 export const TimestampedSegment = {
+  fromSUPFormat(stream: ByteStream): TimestampedSegment {
+    const magic = stream.readU16();
+    if (magic !== 0x5047) { throw new ValidationError('Magic Number not Found!'); }
+    const pts = stream.readU32();
+    const dts = stream.readU32();
+    const timescale = 90000;
+    const segment = Segment.from(stream);
+
+    return {
+      ... segment,
+      pts,
+      dts,
+      timescale
+    };
+  },
+  fromMpegTSFormat(stream: ByteStream, pts: number, dts: number): TimestampedSegment {
+    const magic = stream.readU16();
+    if (magic !== 0x5047) { throw new ValidationError('Magic Number not Found!'); }
+    const timescale = 90000;
+    const segment = Segment.from(stream);
+
+    return {
+      ... segment,
+      pts,
+      dts,
+      timescale
+    };
+  },
+  *iterateSupFormat(buffer: ArrayBuffer): Iterable<TimestampedSegment> {
+    const stream = new ByteStream(buffer);
+    while(!stream.isEmpty()) {
+      yield this.fromSUPFormat(stream);
+    }
+  },
+  *iterateMpegTSFormat(buffer: ArrayBuffer, pts: number, dts: number): Iterable<TimestampedSegment> {
+    const stream = new ByteStream(buffer);
+    while(!stream.isEmpty()) {
+      yield this.fromMpegTSFormat(stream, pts, dts);
+    }
+  },
   *aggregate(iterator: Iterable<TimestampedSegment>): Iterable<TimestampedSegment[]> {
     let segments: TimestampedSegment[] = [];
 
