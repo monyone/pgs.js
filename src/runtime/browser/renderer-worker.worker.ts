@@ -1,11 +1,11 @@
-import decode from "./decoder";
+import decode, { preferOffscreenCanvas } from "./decoder";
 import { FromMainToWorkerEvent, FromWorkerToMainEventRendered } from "./renderer-worker.event";
 
 self.addEventListener('message', (event: MessageEvent<FromMainToWorkerEvent>) => {
   switch (event.data.type) {
     case 'render': {
       const { pgs } = event.data;
-      const source = decode(pgs) as OffscreenCanvas | null; // Omit HTMLCanvasElement does not in WebWorker!
+      const source = decode(pgs, preferOffscreenCanvas) as OffscreenCanvas | null; // Omit HTMLCanvasElement does not in WebWorker!
       if (!source) {
         (self as any).postMessage(FromWorkerToMainEventRendered.from());
         return;

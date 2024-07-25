@@ -1,6 +1,6 @@
 import { AcquisitionPoint, DecodedObjectDefinitionSegment, ObjectDefinitionSegment, PaletteDefinitionSegment } from "../../pgs/type";
 
-const preferOffscreenCanvas = (width: number, height: number): OffscreenCanvas | HTMLCanvasElement | null => {
+export const preferOffscreenCanvas = (width: number, height: number): OffscreenCanvas | HTMLCanvasElement | null => {
   if (typeof OffscreenCanvas !== 'undefined') {
     return new OffscreenCanvas(width, height);
   }
@@ -15,6 +15,23 @@ const preferOffscreenCanvas = (width: number, height: number): OffscreenCanvas |
   return null; // Unsupported!
 }
 
+export const preferHTMLCanvasElement = (width: number, height: number): HTMLCanvasElement | OffscreenCanvas | null => {
+  if (typeof document !== 'undefined') {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    return canvas;
+  }
+
+  if (typeof OffscreenCanvas !== 'undefined') {
+    return new OffscreenCanvas(width, height);
+  }
+
+  return null; // Unsupported!
+}
+
+export type CanvasFactoryFunction = typeof preferOffscreenCanvas | typeof preferHTMLCanvasElement;
+
 const decodeObject = (palette: PaletteDefinitionSegment, object: ObjectDefinitionSegment[] | DecodedObjectDefinitionSegment | null): ImageData | null => {
   if (object == null) { return null; }
   if (!Array.isArray(object)) {
@@ -26,11 +43,11 @@ const decodeObject = (palette: PaletteDefinitionSegment, object: ObjectDefinitio
   return new ImageData(result.rgba, result.width, result.height);
 };
 
-export default (pgs: Readonly<AcquisitionPoint>): OffscreenCanvas | HTMLCanvasElement | null => {
+export default (pgs: Readonly<AcquisitionPoint>, canvasFactoryFunction: CanvasFactoryFunction = preferOffscreenCanvas): OffscreenCanvas | HTMLCanvasElement | null => {
   const { composition, palette, objects, windows } = pgs;
   const { width, height }= composition;
 
-  const canvas = preferOffscreenCanvas(width, height);
+  const canvas = canvasFactoryFunction(width, height);
   if (!canvas) { return null; }
   const context = canvas.getContext('2d') as (OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null);
   if (!context) { return null; }

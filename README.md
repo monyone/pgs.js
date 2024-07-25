@@ -12,6 +12,7 @@
 export type PGSControllerOption = {
   renderOption: {
     objectFit: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down'; // objectFit for PGS Image (default: 'fill')
+    preferHTMLCanvasElement: boolean; // preffer HTMLCanvasElement in Main Thread. (default: false, recommended firefox is true)
     webWorker: boolean; // use WebWorker for rendering (default: false)
   }
 }
