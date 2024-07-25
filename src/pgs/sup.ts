@@ -66,7 +66,7 @@ export default (sup: ArrayBuffer): TimestampedSegment[] => {
           break;
       }
     }
-  } catch(e) {
+  } catch (e) {
     if (e instanceof EOFError) {
       console.error("EOF Occured", e);
     } else if (e instanceof ValidationError) {

@@ -63,7 +63,7 @@ export default (pes: ArrayBuffer, pts: number, dts: number): TimestampedSegment[
           break;
       }
     }
-  } catch(e) {
+  } catch (e) {
     if (e instanceof EOFError) {
       console.error("EOF Occured", e);
     } else if (e instanceof ValidationError) {

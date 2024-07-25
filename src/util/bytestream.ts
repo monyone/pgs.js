@@ -9,12 +9,16 @@ export default class ByteStream {
     this.offset = 0;
   }
 
-  public isEmpty() {
+  public exists(length: number): boolean {
+    return this.offset + length <= this.view.byteLength;
+  }
+
+  public isEmpty(): boolean {
     return this.offset === this.view.byteLength;
   }
 
-  public read(length: number) {
-    if (this.offset + length > this.view.byteLength) {
+  public read(length: number): ArrayBuffer {
+    if (!this.exists(length)) {
       throw new EOFError('Detected EOF!');
     }
 
@@ -23,8 +27,8 @@ export default class ByteStream {
     return result;
   }
 
-  public readU8() {
-    if (this.offset + 1 > this.view.byteLength) {
+  public readU8(): number {
+    if (!this.exists(1)) {
       throw new EOFError('Detected EOF!');
     }
 
@@ -33,8 +37,8 @@ export default class ByteStream {
     return result;
   }
 
-  public readU16() {
-    if (this.offset + 2 > this.view.byteLength) {
+  public readU16(): number {
+    if (!this.exists(2)) {
       throw new EOFError('Detected EOF!');
     }
 
@@ -43,8 +47,8 @@ export default class ByteStream {
     return result;
   }
 
-  public readU24() {
-    if (this.offset + 3 > this.view.byteLength) {
+  public readU24(): number {
+    if (!this.exists(3)) {
       throw new EOFError('Detected EOF!');
     }
 
@@ -53,8 +57,8 @@ export default class ByteStream {
     return result;
   }
 
-  public readU32() {
-    if (this.offset + 4 > this.view.byteLength) {
+  public readU32(): number {
+    if (!this.exists(4)) {
       throw new EOFError('Detected EOF!');
     }
 
@@ -63,7 +67,7 @@ export default class ByteStream {
     return result;
   }
 
-  public readAll() {
+  public readAll(): ArrayBuffer {
     const result = this.view.buffer.slice(this.offset, this.view.byteLength);
     this.offset = this.view.byteLength;
     return result;
