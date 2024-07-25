@@ -4,13 +4,35 @@
 
 * HTML5 Canvas based PGS (Presentation Graphic Stream) rendering
 
+## Options
+
+### PGSController
+
+```ts
+export type PGSControllerOption = {
+  renderOption: {
+    objectFit: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down'; // objectFit for PGS Image (default: 'fill')
+    webWorker: boolean; // use WebWorker for rendering (default: false)
+  }
+}
+```
+
+### PGSSupFeeder
+
+```ts
+export type PGSSupFeederOption = {
+  timeshift: number; // offset for time (default: 0)
+  preload: boolean; // prelodd rgba data (default: false)
+}
+```
+
 ## Getting Started
 
-### PreCondition: Wrapping Element Needed!
+### Requirements: Wrapping Relative Element Needed!
 
 ```html
 <div style="position: relative; display: inline-block;"> <!-- This Relative Wrapping Needed! -->
-  <video></video>
+  <video id="video"></video>
 </div>
 ```
 
