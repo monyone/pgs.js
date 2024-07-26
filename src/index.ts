@@ -15,3 +15,7 @@ export { default as PGSMainThreadRenderer } from './runtime/browser/renderer-mai
 export const readSup = (buffer: ArrayBuffer, decode = false): AcquisitionPoint[] => {
   return Array.from(AcquisitionPoint.iterate(DisplaySet.aggregate(TimestampedSegment.iterateSupFormat(buffer)), decode));
 }
+
+export const readSupAsync = async (stream: ReadableStream, decode = false): Promise<AcquisitionPoint[]> => {
+  return await Array.fromAsync(AcquisitionPoint.iterateAsync(DisplaySet.aggregateAsync(TimestampedSegment.iterateSupFormatAsync(stream)), decode));
+}

@@ -79,7 +79,6 @@ export class AsyncByteStream {
   private reader: ReadableStreamDefaultReader<ArrayBufferView | ArrayBuffer>;
   private done: boolean = false;
   private buffer: ArrayBuffer = new ArrayBuffer(0);
-  private view: DataView = new DataView(this.buffer);
   private offset: number = 0;
 
   constructor(stream: ReadableStream<ArrayBufferView | ArrayBuffer>) {
@@ -97,14 +96,13 @@ export class AsyncByteStream {
     }
 
     this.buffer = concat(this.buffer.slice(this.offset), (value instanceof ArrayBuffer) ? value : value.buffer);
-    this.view = new DataView(this.buffer);
     this.offset = 0;
     if ((this.buffer.byteLength - this.offset) >= length) { return true; }
     return this.pump(length);
   }
 
-  public isEmpty(): boolean {
-    return this.done && this.offset === this.view.byteLength;
+  public async exists(length: number): Promise<boolean> {
+    return (await this.pump(length));
   }
 
   public async read(length: number): Promise<ArrayBuffer> {
@@ -112,48 +110,8 @@ export class AsyncByteStream {
       throw new EOFError('Detected EOF!');
     }
 
-    const result = this.view.buffer.slice(this.offset, this.offset + length);
+    const result = this.buffer.slice(this.offset, this.offset + length);
     this.offset += length;
-    return result;
-  }
-
-  public async readU8(): Promise<number> {
-    if (!(await this.pump(length))) {
-      throw new EOFError('Detected EOF!');
-    }
-
-    const result = this.view.getUint8(this.offset);
-    this.offset += 1;
-    return result;
-  }
-
-  public async readU16(): Promise<number> {
-    if (!(await this.pump(length))) {
-      throw new EOFError('Detected EOF!');
-    }
-
-    const result = this.view.getUint16(this.offset, false);
-    this.offset += 2;
-    return result;
-  }
-
-  public async readU24(): Promise<number> {
-    if (!(await this.pump(length))) {
-      throw new EOFError('Detected EOF!');
-    }
-
-    const result = this.view.getUint16(this.offset, false) * (2 ** 8) + this.view.getUint8(this.offset + 2);
-    this.offset += 3;
-    return result;
-  }
-
-  public async readU32(): Promise<number> {
-    if (!(await this.pump(length))) {
-      throw new EOFError('Detected EOF!');
-    }
-
-    const result = this.view.getUint32(this.offset, false);
-    this.offset += 4;
     return result;
   }
 }
