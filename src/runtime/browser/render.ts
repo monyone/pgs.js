@@ -1,4 +1,5 @@
-import { AcquisitionPoint, DecodedObjectDefinitionSegment, ObjectDefinitionSegment, PaletteDefinitionSegment } from "../../pgs/type";
+import { AcquisitionPoint } from "../../pgs/type";
+import decode from "./decode";
 
 export const preferOffscreenCanvas = (width: number, height: number): OffscreenCanvas | HTMLCanvasElement | null => {
   if (typeof OffscreenCanvas !== 'undefined') {
@@ -32,17 +33,6 @@ export const preferHTMLCanvasElement = (width: number, height: number): HTMLCanv
 
 export type CanvasFactoryFunction = typeof preferOffscreenCanvas | typeof preferHTMLCanvasElement;
 
-const decodeObject = (palette: PaletteDefinitionSegment, object: ObjectDefinitionSegment[] | DecodedObjectDefinitionSegment | null): ImageData | null => {
-  if (object == null) { return null; }
-  if (!Array.isArray(object)) {
-    return new ImageData(object.rgba, object.width, object.height);
-  }
-
-  const result = DecodedObjectDefinitionSegment.from(palette, object);
-  if (result == null) { return null; }
-  return new ImageData(result.rgba, result.width, result.height);
-};
-
 export default (pgs: Readonly<AcquisitionPoint>, canvasFactoryFunction: CanvasFactoryFunction = preferOffscreenCanvas): OffscreenCanvas | HTMLCanvasElement | null => {
   const { composition, palette, objects, windows } = pgs;
   const { width, height }= composition;
@@ -57,7 +47,7 @@ export default (pgs: Readonly<AcquisitionPoint>, canvasFactoryFunction: CanvasFa
     const window = windows.get(compobisionObject.windowId);
     if (object == null || window == null) { continue; }
 
-    const data = decodeObject(palette, object);
+    const data = decode(palette, object);
     if (data == null) { continue; }
 
     context.save();

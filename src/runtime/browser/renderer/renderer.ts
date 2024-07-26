@@ -1,4 +1,4 @@
-import { AcquisitionPoint } from "../../pgs/type";
+import { AcquisitionPoint } from "../../../pgs/type";
 import { PGSRenderOption } from "./renderer-option";
 
 export default abstract class PGSRenderer<T extends HTMLCanvasElement | OffscreenCanvas> {

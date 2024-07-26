@@ -10,9 +10,9 @@ export { default as PGSSupFeeder } from './runtime/common/supfeeder';
 export { default as PGSAsyncSupFeeder } from './runtime/common/asyncsupfeeder';
 
 
-export { default as PGSController } from './runtime/browser/controller';
-export type { default as PGSRenderer } from './runtime/browser/renderer';
-export { default as PGSMainThreadRenderer } from './runtime/browser/renderer-main';
+export { default as PGSController } from './runtime/browser/controller/controller';
+export type { default as PGSRenderer } from './runtime/browser/renderer/renderer';
+export { default as PGSMainThreadRenderer } from './runtime/browser/renderer/renderer-main';
 
 export const readSup = (buffer: ArrayBuffer, decode = false): AcquisitionPoint[] => {
   return Array.from(AcquisitionPoint.iterate(DisplaySet.aggregate(TimestampedSegment.iterateSupFormat(buffer)), decode));

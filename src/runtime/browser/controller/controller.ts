@@ -1,8 +1,8 @@
-import PGSFeeder from "../common/feeder";
+import PGSFeeder from "../../common/feeder";
 import { PGSControllerOption } from "./controller-option";
-import PGSRenderer from "./renderer";
-import { PGSRenderOption } from "./renderer-option";
-import { selectRendererByOption } from "./renderer-utils";
+import PGSRenderer from "../renderer/renderer";
+import { PGSRenderOption } from "../renderer/renderer-option";
+import { selectRendererByOption } from "../renderer/renderer-utils";
 
 export default class PGSController {
   // Option

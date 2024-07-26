@@ -1,7 +1,7 @@
-import { AcquisitionPoint } from "../../pgs/type";
+import { AcquisitionPoint } from "../../../pgs/type";
 
 import PGSRenderer from "./renderer";
-import decode, { preferHTMLCanvasElement, preferOffscreenCanvas } from "./decoder";
+import render, { preferHTMLCanvasElement, preferOffscreenCanvas } from "../render";
 import { darwImageByOption } from "./renderer-utils";
 import { PGSRenderOption } from "./renderer-option";
 
@@ -18,7 +18,7 @@ export default class PGSMainThraedRenderer<T extends HTMLCanvasElement | Offscre
     const context = this.getContext2D();
     if (!context) { return; }
 
-    const source = decode(pgs, this.option.preferHTMLCanvasElement ? preferHTMLCanvasElement : preferOffscreenCanvas);
+    const source = render(pgs, this.option.preferHTMLCanvasElement ? preferHTMLCanvasElement : preferOffscreenCanvas);
     if (!source) {
       context.clearRect(0, 0, this.canvas.width, this.canvas.height);
       return;

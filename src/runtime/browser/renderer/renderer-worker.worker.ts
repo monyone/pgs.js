@@ -1,4 +1,4 @@
-import decode, { preferOffscreenCanvas } from "./decoder";
+import decode, { preferOffscreenCanvas } from "../decode";
 import { FromMainToWorkerEvent, FromWorkerToMainEventRendered } from "./renderer-worker.event";
 
 self.addEventListener('message', (event: MessageEvent<FromMainToWorkerEvent>) => {
