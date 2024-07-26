@@ -2,18 +2,32 @@ import { AcquisitionPoint, DisplaySet, TimestampedSegment } from '../../pgs/type
 
 import PGSFeeder, { PGSFeederOption } from './feeder';
 
-export default class PGSSupFeeder implements PGSFeeder {
+export default class AsyncPGSSupFeeder implements PGSFeeder {
   private option: PGSFeederOption;
-  private acquisitions: Readonly<AcquisitionPoint>[];
+  private acquisitions: Readonly<AcquisitionPoint>[] = [];
+  private donePromise: Promise<boolean>;
 
-  public constructor(sup: ArrayBuffer, option?: Partial<PGSFeederOption>) {
+  public constructor(stream: ReadableStream<ArrayBufferView | ArrayBuffer>, option?: Partial<PGSFeederOption>) {
     this.option = {
       preload: false,
       timeshift: 0,
       ... option
     };
 
-    this.acquisitions = Array.from(AcquisitionPoint.iterate(DisplaySet.aggregate(TimestampedSegment.iterateSupFormat(sup)), this.option.preload));
+    this.donePromise = new Promise((resolve) => {
+      this.prepare(stream, resolve);
+    })
+  }
+
+  private async prepare(stream: ReadableStream<ArrayBufferView | ArrayBuffer>, resolve?: (result: boolean) => void) {
+    for await (const acquisition of AcquisitionPoint.iterateAsync(DisplaySet.aggregateAsync(TimestampedSegment.iterateSupFormatAsync(stream)))) {
+      this.acquisitions.push(acquisition);
+    }
+    resolve?.(true);
+  }
+
+  public get done(): Promise<boolean> {
+    return this.donePromise;
   }
 
   public content(time: number): Readonly<AcquisitionPoint> | null {

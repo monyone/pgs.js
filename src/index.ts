@@ -7,6 +7,8 @@ export * from './pgs/type';
 
 export type { default as PGSFeeder } from './runtime/common/feeder';
 export { default as PGSSupFeeder } from './runtime/common/supfeeder';
+export { default as PGSAsyncSupFeeder } from './runtime/common/asyncsupfeeder';
+
 
 export { default as PGSController } from './runtime/browser/controller';
 export type { default as PGSRenderer } from './runtime/browser/renderer';
@@ -14,8 +16,4 @@ export { default as PGSMainThreadRenderer } from './runtime/browser/renderer-mai
 
 export const readSup = (buffer: ArrayBuffer, decode = false): AcquisitionPoint[] => {
   return Array.from(AcquisitionPoint.iterate(DisplaySet.aggregate(TimestampedSegment.iterateSupFormat(buffer)), decode));
-}
-
-export const readSupAsync = async (stream: ReadableStream, decode = false): Promise<AcquisitionPoint[]> => {
-  return await Array.fromAsync(AcquisitionPoint.iterateAsync(DisplaySet.aggregateAsync(TimestampedSegment.iterateSupFormatAsync(stream)), decode));
 }
