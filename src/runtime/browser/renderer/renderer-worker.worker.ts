@@ -1,17 +1,17 @@
-import decode, { preferOffscreenCanvas } from "../decode";
+import { ImageBitmapForAcquisitionPoint } from "../render";
 import { FromMainToWorkerEvent, FromWorkerToMainEventRendered } from "./renderer-worker.event";
 
 self.addEventListener('message', (event: MessageEvent<FromMainToWorkerEvent>) => {
   switch (event.data.type) {
     case 'render': {
       const { pgs } = event.data;
-      const source = decode(pgs, preferOffscreenCanvas) as OffscreenCanvas | null; // Omit HTMLCanvasElement does not in WebWorker!
-      if (!source) {
+      const data = ImageBitmapForAcquisitionPoint.from(pgs);
+      if (!data) {
         (self as any).postMessage(FromWorkerToMainEventRendered.from());
         return;
       }
 
-      const bitmap = source.transferToImageBitmap();
+      const { bitmap } = data;
       (self as any).postMessage(FromWorkerToMainEventRendered.from(bitmap), [bitmap]);
 
       break;

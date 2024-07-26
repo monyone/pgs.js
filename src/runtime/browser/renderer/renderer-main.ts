@@ -1,7 +1,7 @@
 import { AcquisitionPoint } from "../../../pgs/type";
 
 import PGSRenderer from "./renderer";
-import render, { preferHTMLCanvasElement, preferOffscreenCanvas } from "../render";
+import { CanvasForAcquisitionPoint, preferHTMLCanvasElement, preferOffscreenCanvas } from "../render";
 import { darwImageByOption } from "./renderer-utils";
 import { PGSRenderOption } from "./renderer-option";
 
@@ -18,19 +18,20 @@ export default class PGSMainThraedRenderer<T extends HTMLCanvasElement | Offscre
     const context = this.getContext2D();
     if (!context) { return; }
 
-    const source = render(pgs, this.option.preferHTMLCanvasElement ? preferHTMLCanvasElement : preferOffscreenCanvas);
-    if (!source) {
+    const data = CanvasForAcquisitionPoint.from(pgs, this.option.preferHTMLCanvasElement ? preferHTMLCanvasElement : preferOffscreenCanvas);
+    if (!data) {
       context.clearRect(0, 0, this.canvas.width, this.canvas.height);
       return;
     }
 
-    if (this.canvas.width !== source.width || this.canvas.height !== source.width) {
-      this.canvas.width = source.width;
-      this.canvas.height = source.height;
+    const { canvas } = data;
+    if (this.canvas.width !== canvas.width || this.canvas.height !== canvas.width) {
+      this.canvas.width = canvas.width;
+      this.canvas.height = canvas.height;
     }
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    darwImageByOption(source, this.canvas, this.option);
+    darwImageByOption(canvas, this.canvas, this.option);
 
-    source.width = source.height = 0;
+    canvas.width = canvas.height = 0;
   }
 }

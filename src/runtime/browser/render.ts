@@ -33,14 +33,8 @@ export const preferHTMLCanvasElement = (width: number, height: number): HTMLCanv
 
 export type CanvasFactoryFunction = typeof preferOffscreenCanvas | typeof preferHTMLCanvasElement;
 
-export default (pgs: Readonly<AcquisitionPoint>, canvasFactoryFunction: CanvasFactoryFunction = preferOffscreenCanvas): OffscreenCanvas | HTMLCanvasElement | null => {
-  const { composition, palette, objects, windows } = pgs;
-  const { width, height }= composition;
-
-  const canvas = canvasFactoryFunction(width, height);
-  if (!canvas) { return null; }
-  const context = canvas.getContext('2d') as (OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null);
-  if (!context) { return null; }
+const render = (acquisition: AcquisitionPoint, context: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D) => {
+  const { composition, palette, objects, windows } = acquisition;
 
   for (const compobisionObject of composition.compositionObjects) {
     const object = objects.get(compobisionObject.objectId);
@@ -69,6 +63,72 @@ export default (pgs: Readonly<AcquisitionPoint>, canvasFactoryFunction: CanvasFa
 
     context.restore();
   }
+}
 
-  return canvas;
+export type ImageBitmapForAcquisitionPoint= {
+  pts: number;
+  timescale: number;
+  bitmap: ImageBitmap;
+};
+export const ImageBitmapForAcquisitionPoint = {
+  from(acquisition: AcquisitionPoint): ImageBitmapForAcquisitionPoint | null {
+    const { composition } = acquisition;
+    const { width, height }= composition;
+
+    if (typeof OffscreenCanvas === 'undefined') { return null; }
+    const canvas = new OffscreenCanvas(width, height);
+    if (!canvas) { return null; }
+    const context = canvas.getContext('2d') as (OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null);
+    if (!context) { return null; }
+
+    render(acquisition, context);
+
+    return {
+      pts: acquisition.pts,
+      timescale: acquisition.timescale,
+      bitmap: canvas.transferToImageBitmap(),
+    };
+  },
+  async fromAsync(acquisition: AcquisitionPoint, canvasFactoryFunction: CanvasFactoryFunction = preferOffscreenCanvas): Promise<ImageBitmapForAcquisitionPoint | null> {
+    const { composition } = acquisition;
+    const { width, height }= composition;
+
+    const canvas = canvasFactoryFunction(width, height);
+    if (!canvas) { return null; }
+    const context = canvas.getContext('2d') as (OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null);
+    if (!context) { return null; }
+
+    render(acquisition, context);
+
+    return {
+      pts: acquisition.pts,
+      timescale: acquisition.timescale,
+      bitmap: await createImageBitmap(canvas)
+    };
+  },
+}
+
+export type CanvasForAcquisitionPoint= {
+  pts: number;
+  timescale: number;
+  canvas: OffscreenCanvas | HTMLCanvasElement;
+};
+export const CanvasForAcquisitionPoint = {
+  from(acquisition: AcquisitionPoint, canvasFactoryFunction: CanvasFactoryFunction = preferOffscreenCanvas): CanvasForAcquisitionPoint | null {
+    const { composition } = acquisition;
+    const { width, height }= composition;
+
+    const canvas = canvasFactoryFunction(width, height);
+    if (!canvas) { return null; }
+    const context = canvas.getContext('2d') as (OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null);
+    if (!context) { return null; }
+
+    render(acquisition, context);
+
+    return {
+      pts: acquisition.pts,
+      timescale: acquisition.timescale,
+      canvas,
+    };
+  },
 }
