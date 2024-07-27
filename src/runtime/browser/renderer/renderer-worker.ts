@@ -2,7 +2,6 @@ import { AcquisitionPointForRender } from "../render";
 
 import PGSRenderer from "./renderer";
 import { PGSRenderOption } from "./renderer-option";
-import { darwImageByOption } from "./renderer-utils";
 import { FromMainToWorkerEventRender, FromWorkerToMainEvent } from "./renderer-worker.event";
 import DecodeWorker from "./renderer-worker.worker?worker&inline";
 
@@ -44,7 +43,7 @@ export default class PGSWorkerThraedRenderer<T extends HTMLCanvasElement | Offsc
       this.canvas.height = source.height;
     }
     this.clear();
-    darwImageByOption(source, this.canvas, this.option);
+    context.drawImage(source, 0, 0, this.canvas.width, this.canvas.height);
   }
 
   private rendered(event: MessageEvent<FromWorkerToMainEvent>) {

@@ -1,6 +1,5 @@
 import PGSRenderer from "./renderer";
 import { AcquisitionPointForRender, AcquisitionPointRenderedCanvas, preferHTMLCanvasElement, preferOffscreenCanvas } from "../render";
-import { darwImageByOption } from "./renderer-utils";
 import { PGSRenderOption } from "./renderer-option";
 
 export default class PGSMainThraedRenderer<T extends HTMLCanvasElement | OffscreenCanvas> extends PGSRenderer<T> {
@@ -18,7 +17,7 @@ export default class PGSMainThraedRenderer<T extends HTMLCanvasElement | Offscre
       this.canvas.height = source.height;
     }
     this.clear();
-    darwImageByOption(source, this.canvas, this.option);
+    context.drawImage(source, 0, 0, this.canvas.width, this.canvas.height);
   }
 
   public render(acquisition: Readonly<AcquisitionPointForRender>): void {
