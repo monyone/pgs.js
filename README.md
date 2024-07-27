@@ -18,12 +18,12 @@ export type PGSControllerOption = {
 }
 ```
 
-### PGSSupFeeder
+### PGSSupFeeder/PGSAsyncSupFeeder
 
 ```ts
 export type PGSSupFeederOption = {
   timeshift: number; // offset for time (default: 0)
-  preload: boolean; // prelodd rgba data (default: false)
+  preload: 'none' | 'decode' | 'render' ; // prelodd rgba data (default: none)
 }
 ```
 
@@ -37,7 +37,7 @@ export type PGSSupFeederOption = {
 </div>
 ```
 
-### Work with SUP file
+### Work with SUP file (sync)
 
 ```html
 <script type="module">
@@ -49,6 +49,23 @@ export type PGSSupFeederOption = {
 
   const controller = new PGSController();
   const feeder = new PGSSupFeeder(sup);
+
+  controller.attachFeeder(feeder);
+  controller.attachMedia(video)
+</script>
+```
+
+### Work with SUP file (async)
+
+```html
+<script type="module">
+  import { PGSController, PGSAsyncSupFeeder } from "pgs.js"; // Please Specify ImportMap!
+  const res = await fetch('./something.sup');
+
+  const video = document.getElementById('video');
+
+  const controller = new PGSController();
+  const feeder = new PGSAsyncSupFeeder(res.body);
 
   controller.attachFeeder(feeder);
   controller.attachMedia(video)
