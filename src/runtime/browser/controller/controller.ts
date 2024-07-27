@@ -17,8 +17,7 @@ export default class PGSController {
   private readonly onSeekingHandler = this.onSeeking.bind(this);
   private readonly onSeekedHandler = this.onSeeked.bind(this);
   // Renderer
-  private viewerResRenderer: PGSRenderer<HTMLCanvasElement> | null = null;
-  private videoResRenderer: PGSRenderer<HTMLCanvasElement> | null = null;
+  private renderer: PGSRenderer<HTMLCanvasElement> | null = null;
   private priviousPts: number | null = null;
   // Feeder
   private feeder: PGSFeeder | null = null;
@@ -59,17 +58,12 @@ export default class PGSController {
     viewerResCanvas.style.height = '100%';
     viewerResCanvas.style.objectFit = 'contain';
 
-    // prepare video plane
-    const videoResCanvas = document.createElement('canvas');
-
     // prepare Renderer
-    this.viewerResRenderer = selectRendererByOption(this.option.renderOption);
-    this.viewerResRenderer.attach(viewerResCanvas);
-    this.videoResRenderer = selectRendererByOption(this.option.renderOption);
-    this.videoResRenderer.attach(videoResCanvas);
+    this.renderer = selectRendererByOption(this.option.renderOption);
+    this.renderer.attach(viewerResCanvas);
 
     // setup
-    this.viewerResRenderer.register(this.container);
+    this.renderer.register(this.container);
 
     // prepare Event Loop
     this.onTimeupdate();
@@ -83,17 +77,12 @@ export default class PGSController {
     }
 
     // cleanup viewer canvas
-    this.viewerResRenderer?.destroy();
-
-    // clean up video canvas
-    this.videoResRenderer?.destroy();
+    this.renderer?.destroy();
   }
 
   private clear() {
     // clearRect for viewer
-    this.viewerResRenderer?.clear();
-    // clearRect for video
-    this.videoResRenderer?.clear();
+    this.renderer?.clear();
     // clear privious information
     this.priviousPts = null;
   }
@@ -131,8 +120,7 @@ export default class PGSController {
     // If already rendered, ignore it
     if (this.priviousPts === content.pts) { return ; }
 
-    this.viewerResRenderer?.render(content);
-    this.videoResRenderer?.render(content);
+    this.renderer?.render(content);
 
     // Update privious information
     this.priviousPts = content.pts;
@@ -161,6 +149,6 @@ export default class PGSController {
   }
 
   public snapshot(): HTMLCanvasElement | null {
-    return this.videoResRenderer?.snapshot() ?? null;
+    return this.renderer?.snapshot() ?? null;
   }
 }
