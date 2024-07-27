@@ -6,7 +6,6 @@ import { darwImageByOption } from "./renderer-utils";
 import { PGSRenderOption } from "./renderer-option";
 
 export default class PGSMainThraedRenderer<T extends HTMLCanvasElement | OffscreenCanvas> extends PGSRenderer<T> {
-
   public constructor(option?: Partial<PGSRenderOption>) {
     super(option);
   }
@@ -20,7 +19,7 @@ export default class PGSMainThraedRenderer<T extends HTMLCanvasElement | Offscre
 
     const data = CanvasForAcquisitionPoint.from(pgs, this.option.preferHTMLCanvasElement ? preferHTMLCanvasElement : preferOffscreenCanvas);
     if (!data) {
-      context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.clear();
       return;
     }
 
@@ -29,9 +28,7 @@ export default class PGSMainThraedRenderer<T extends HTMLCanvasElement | Offscre
       this.canvas.width = canvas.width;
       this.canvas.height = canvas.height;
     }
-    context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.clear();
     darwImageByOption(canvas, this.canvas, this.option);
-
-    canvas.width = canvas.height = 0;
   }
 }

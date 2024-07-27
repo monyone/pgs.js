@@ -29,7 +29,7 @@ export default class PGSWorkerThraedRenderer<T extends HTMLCanvasElement | Offsc
 
         const { bitmap } = event.data;
         if (bitmap == null) {
-          context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          this.clear();
           return;
         }
 
@@ -37,7 +37,7 @@ export default class PGSWorkerThraedRenderer<T extends HTMLCanvasElement | Offsc
           this.canvas.width = bitmap.width;
           this.canvas.height = bitmap.height;
         }
-        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.clear();
         darwImageByOption(bitmap, this.canvas, this.option);
 
         bitmap.close();
