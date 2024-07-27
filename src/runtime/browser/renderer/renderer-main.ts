@@ -25,7 +25,10 @@ export default class PGSMainThraedRenderer<T extends HTMLCanvasElement | Offscre
     switch (acquisition.type) {
       case 'none': {
         const rendered = AcquisitionPointRenderedCanvas.from(acquisition, this.option.preferHTMLCanvasElement ? preferHTMLCanvasElement : preferOffscreenCanvas);
-        if (rendered) { this.draw(rendered.canvas); }
+        if (rendered) {
+          this.draw(rendered.canvas);
+          rendered.canvas.width = rendered.canvas.height = 0;
+        }
         break;
       }
       case 'bitmap':
