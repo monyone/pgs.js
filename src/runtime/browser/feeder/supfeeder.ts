@@ -23,7 +23,7 @@ export default class PGSSupFeeder implements PGSFeeder {
         this.acquisitions = Array.from(AcquisitionPointNotRendered.iterate(AcquisitionPoint.iterate(iterator, true)));
         break;
       case 'render':
-        this.acquisitions = Array.from(AcquisitionPointRenderedImageBitmap.iterate(AcquisitionPointNotRendered.iterate(AcquisitionPoint.iterate(iterator, true))));
+        this.acquisitions = Array.from(AcquisitionPointRenderedImageBitmap.iterate(AcquisitionPoint.iterate(iterator, true)));
         break;
       default: {
         const exhaustive: never = this.option.preload;
