@@ -1,5 +1,6 @@
 import { AsyncByteStream, ByteStream } from "../util/bytestream";
 import concat from "../util/concat";
+import EOFError from "../util/eof";
 import ycbcr from "../util/ycbcr";
 import ValidationError from "./error";
 
@@ -406,6 +407,10 @@ export const Segment = {
   async fromAsync(stream: AsyncByteStream): Promise<Segment> {
     const segmentType = await stream.readU8();
     const segmentSize = await stream.readU16();
+
+    if (!(await stream.exists(segmentSize))) {
+      throw new EOFError(`Insufficient SegmentLength!`);
+    }
 
     switch (segmentType) {
       case SegmentType.PDS:
