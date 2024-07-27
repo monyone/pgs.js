@@ -1,4 +1,4 @@
-import PGSFeeder from "../../common/feeder";
+import PGSFeeder from "../feeder/feeder";
 import { PGSControllerOption } from "./controller-option";
 import PGSRenderer from "../renderer/renderer";
 import { PGSRenderOption } from "../renderer/renderer-option";

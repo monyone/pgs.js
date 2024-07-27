@@ -1,11 +1,11 @@
-import { ImageBitmapForAcquisitionPoint } from "../render";
+import { AcquisitionPointRenderedImageBitmap } from "../render";
 import { FromMainToWorkerEvent, FromWorkerToMainEventRendered } from "./renderer-worker.event";
 
 self.addEventListener('message', (event: MessageEvent<FromMainToWorkerEvent>) => {
   switch (event.data.type) {
     case 'render': {
       const { pgs } = event.data;
-      const data = ImageBitmapForAcquisitionPoint.from(pgs);
+      const data = AcquisitionPointRenderedImageBitmap.from(pgs);
       if (!data) {
         (self as any).postMessage(FromWorkerToMainEventRendered.from());
         return;

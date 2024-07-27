@@ -1,4 +1,4 @@
-import { AcquisitionPoint } from "../../../pgs/type";
+import { AcquisitionPointForRender } from "../render";
 
 import PGSRenderer from "./renderer";
 import { PGSRenderOption } from "./renderer-option";
@@ -16,30 +16,47 @@ export default class PGSWorkerThraedRenderer<T extends HTMLCanvasElement | Offsc
     this.worker.addEventListener('message', this.renderedHandler);
   }
 
-  public render(pgs: Readonly<AcquisitionPoint>): void {
-    this.worker.postMessage(FromMainToWorkerEventRender.from(pgs));
+  public render(acquisition: Readonly<AcquisitionPointForRender>): void {
+    switch (acquisition.type) {
+      case 'none':
+        this.worker.postMessage(FromMainToWorkerEventRender.from(acquisition));
+        break;
+      case 'bitmap':
+        this.draw(acquisition.bitmap);
+        break;
+      case 'canvas':
+        this.draw(acquisition.canvas);
+        break;
+      default: {
+        const exhaustive: never = acquisition;
+        throw new Error(`Exhaustive check: ${exhaustive} reached!`);
+      }
+    }
+  }
+
+  private draw(source: ImageBitmap | HTMLCanvasElement | OffscreenCanvas) {
+    if (this.canvas == null) { return; }
+    const context = this.getContext2D();
+    if (!context) { return; }
+
+    if (this.canvas.width !== source.width || this.canvas.height !== source.width) {
+      this.canvas.width = source.width;
+      this.canvas.height = source.height;
+    }
+    this.clear();
+    darwImageByOption(source, this.canvas, this.option);
   }
 
   private rendered(event: MessageEvent<FromWorkerToMainEvent>) {
     switch (event.data.type) {
       case 'rendered': {
-        if (this.canvas == null) { return; }
-        const context = this.getContext2D();
-        if (!context) { return; }
-
         const { bitmap } = event.data;
         if (bitmap == null) {
           this.clear();
           return;
         }
 
-        if (this.canvas.width !== bitmap.width || this.canvas.height !== bitmap.width) {
-          this.canvas.width = bitmap.width;
-          this.canvas.height = bitmap.height;
-        }
-        this.clear();
-        darwImageByOption(bitmap, this.canvas, this.option);
-
+        this.draw(bitmap);
         bitmap.close();
         break;
       }

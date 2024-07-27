@@ -65,31 +65,52 @@ const render = (acquisition: AcquisitionPoint, context: OffscreenCanvasRendering
   }
 }
 
-export type ImageBitmapForAcquisitionPoint= {
+export type AcquisitionPointNotRendered = AcquisitionPoint & {
+  type: 'none';
+};
+export const AcquisitionPointNotRendered = {
+  from(acquisition: AcquisitionPoint): AcquisitionPointNotRendered {
+    return {
+      type: 'none',
+      ... acquisition
+    };
+  },
+  *iterate(iterator: Iterable<AcquisitionPoint>): Iterable<AcquisitionPointNotRendered> {
+    for (const acquisition of iterator) {
+      const to = AcquisitionPointNotRendered.from(acquisition);
+      if (to == null ){ return; }
+      yield to;
+    }
+  },
+};
+
+export type AcquisitionPointRenderedImageBitmap = {
+  type: 'bitmap';
   pts: number;
   timescale: number;
   bitmap: ImageBitmap;
 };
-export const ImageBitmapForAcquisitionPoint = {
-  from(acquisition: AcquisitionPoint): ImageBitmapForAcquisitionPoint | null {
+export const AcquisitionPointRenderedImageBitmap = {
+  from(acquisition: AcquisitionPoint): AcquisitionPointRenderedImageBitmap | null {
     const { composition } = acquisition;
     const { width, height }= composition;
 
     if (typeof OffscreenCanvas === 'undefined') { return null; }
     const canvas = new OffscreenCanvas(width, height);
     if (!canvas) { return null; }
-    const context = canvas.getContext('2d') as (OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null);
+    const context = canvas.getContext('2d');
     if (!context) { return null; }
 
     render(acquisition, context);
 
     return {
+      type: 'bitmap',
       pts: acquisition.pts,
       timescale: acquisition.timescale,
       bitmap: canvas.transferToImageBitmap(),
     };
   },
-  async fromAsync(acquisition: AcquisitionPoint, canvasFactoryFunction: CanvasFactoryFunction = preferOffscreenCanvas): Promise<ImageBitmapForAcquisitionPoint | null> {
+  async fromAsync(acquisition: AcquisitionPoint, canvasFactoryFunction: CanvasFactoryFunction = preferOffscreenCanvas): Promise<AcquisitionPointRenderedImageBitmap | null> {
     const { composition } = acquisition;
     const { width, height }= composition;
 
@@ -101,20 +122,36 @@ export const ImageBitmapForAcquisitionPoint = {
     render(acquisition, context);
 
     return {
+      type: 'bitmap',
       pts: acquisition.pts,
       timescale: acquisition.timescale,
       bitmap: await createImageBitmap(canvas)
     };
   },
+  *iterate(iterator: Iterable<AcquisitionPoint>): Iterable<AcquisitionPointRenderedImageBitmap> {
+    for (const acquisition of iterator) {
+      const rendered = AcquisitionPointRenderedImageBitmap.from(acquisition);
+      if (rendered == null ){ return; }
+      yield rendered;
+    }
+  },
+  async *iterateAsync(iterator: AsyncIterable<AcquisitionPoint>, canvasFactoryFunction: CanvasFactoryFunction = preferOffscreenCanvas): AsyncIterable<AcquisitionPointRenderedImageBitmap> {
+    for await (const acquisition of iterator) {
+      const rendered = await AcquisitionPointRenderedImageBitmap.fromAsync(acquisition, canvasFactoryFunction);
+      if (rendered == null ){ return; }
+      yield rendered;
+    }
+  },
 }
 
-export type CanvasForAcquisitionPoint= {
+export type AcquisitionPointRenderedCanvas = {
+  type: 'canvas';
   pts: number;
   timescale: number;
   canvas: OffscreenCanvas | HTMLCanvasElement;
 };
-export const CanvasForAcquisitionPoint = {
-  from(acquisition: AcquisitionPoint, canvasFactoryFunction: CanvasFactoryFunction = preferOffscreenCanvas): CanvasForAcquisitionPoint | null {
+export const AcquisitionPointRenderedCanvas = {
+  from(acquisition: AcquisitionPoint, canvasFactoryFunction: CanvasFactoryFunction = preferOffscreenCanvas): AcquisitionPointRenderedCanvas | null {
     const { composition } = acquisition;
     const { width, height }= composition;
 
@@ -126,9 +163,12 @@ export const CanvasForAcquisitionPoint = {
     render(acquisition, context);
 
     return {
+      type: 'canvas',
       pts: acquisition.pts,
       timescale: acquisition.timescale,
       canvas,
     };
   },
 }
+
+export type AcquisitionPointForRender = AcquisitionPointNotRendered | AcquisitionPointRenderedImageBitmap | AcquisitionPointRenderedCanvas;

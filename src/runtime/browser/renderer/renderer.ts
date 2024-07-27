@@ -1,4 +1,4 @@
-import { AcquisitionPoint } from "../../../pgs/type";
+import { AcquisitionPointForRender } from "../render";
 import { PGSRenderOption } from "./renderer-option";
 
 export default abstract class PGSRenderer<T extends HTMLCanvasElement | OffscreenCanvas> {
@@ -58,7 +58,7 @@ export default abstract class PGSRenderer<T extends HTMLCanvasElement | Offscree
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
-  public abstract render(pgs: Readonly<AcquisitionPoint>): void;
+  public abstract render(pgs: Readonly<AcquisitionPointForRender>): void;
 
   public destroy(): void {
     this.unregister();
