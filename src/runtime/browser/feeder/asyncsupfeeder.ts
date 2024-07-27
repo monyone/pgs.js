@@ -1,15 +1,16 @@
-import { AcquisitionPoint, DisplaySet, TimestampedSegment } from '../../pgs/type'
+import { AcquisitionPoint, DisplaySet, TimestampedSegment } from '../../../pgs/type'
+import { AcquisitionPointForRender, AcquisitionPointNotRendered, AcquisitionPointRenderedImageBitmap } from '../render';
 
 import PGSFeeder, { PGSFeederOption } from './feeder';
 
 export default class AsyncPGSSupFeeder implements PGSFeeder {
   private option: PGSFeederOption;
-  private acquisitions: Readonly<AcquisitionPoint>[] = [];
+  private acquisitions: Readonly<AcquisitionPointForRender>[] = [];
   private donePromise: Promise<boolean>;
 
   public constructor(stream: ReadableStream<ArrayBufferView | ArrayBuffer>, option?: Partial<PGSFeederOption>) {
     this.option = {
-      preload: false,
+      preload: 'none',
       timeshift: 0,
       ... option
     };
@@ -20,8 +21,27 @@ export default class AsyncPGSSupFeeder implements PGSFeeder {
   }
 
   private async prepare(stream: ReadableStream<ArrayBufferView | ArrayBuffer>, resolve?: (result: boolean) => void) {
-    for await (const acquisition of AcquisitionPoint.iterateAsync(DisplaySet.aggregateAsync(TimestampedSegment.iterateSupFormatAsync(stream)))) {
-      this.acquisitions.push(acquisition);
+    const iterator = DisplaySet.aggregateAsync(TimestampedSegment.iterateSupFormatAsync(stream));
+    switch (this.option.preload) {
+      case 'none':
+        for await (const acquisition of AcquisitionPointNotRendered.iterateAsync(AcquisitionPoint.iterateAsync(iterator, false))) {
+          this.acquisitions.push(acquisition);
+        }
+        break;
+      case 'decode':
+        for await (const acquisition of AcquisitionPointNotRendered.iterateAsync(AcquisitionPoint.iterateAsync(iterator, true))) {
+          this.acquisitions.push(acquisition);
+        }
+        break;
+      case 'render':
+        for await (const acquisition of AcquisitionPointRenderedImageBitmap.iterateAsync(AcquisitionPoint.iterateAsync(iterator, true))) {
+          this.acquisitions.push(acquisition);
+        }
+        break;
+      default: {
+        const exhaustive: never = this.option.preload;
+        throw new Error(`Exhaustive check: ${exhaustive} reached!`);
+      }
     }
     resolve?.(true);
   }
@@ -30,7 +50,7 @@ export default class AsyncPGSSupFeeder implements PGSFeeder {
     return this.donePromise;
   }
 
-  public content(time: number): Readonly<AcquisitionPoint> | null {
+  public content(time: number): Readonly<AcquisitionPointForRender> | null {
     time -= this.option.timeshift;
 
     {
@@ -58,9 +78,5 @@ export default class AsyncPGSSupFeeder implements PGSFeeder {
 
   public onseek(): void {
     return; // No Effect
-  }
-
-  public all(): Readonly<AcquisitionPoint>[] {
-    return this.acquisitions;
   }
 }

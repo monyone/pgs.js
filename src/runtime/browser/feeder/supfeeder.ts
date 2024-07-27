@@ -1,5 +1,5 @@
 import { AcquisitionPoint, DisplaySet, TimestampedSegment } from '../../../pgs/type'
-import { AcquisitionPointForRender, AcquisitionPointNotRendered } from '../render';
+import { AcquisitionPointForRender, AcquisitionPointNotRendered, AcquisitionPointRenderedImageBitmap } from '../render';
 
 import PGSFeeder, { PGSFeederOption } from './feeder';
 
@@ -9,12 +9,27 @@ export default class PGSSupFeeder implements PGSFeeder {
 
   public constructor(sup: ArrayBuffer, option?: Partial<PGSFeederOption>) {
     this.option = {
-      preload: false,
+      preload: 'none',
       timeshift: 0,
       ... option
     };
 
-    this.acquisitions = Array.from(AcquisitionPointNotRendered.iterate(AcquisitionPoint.iterate(DisplaySet.aggregate(TimestampedSegment.iterateSupFormat(sup)), this.option.preload)));
+    const iterator = DisplaySet.aggregate(TimestampedSegment.iterateSupFormat(sup));
+    switch (this.option.preload) {
+      case 'none':
+        this.acquisitions = Array.from(AcquisitionPointNotRendered.iterate(AcquisitionPoint.iterate(iterator, false)));
+        break;
+      case 'decode':
+        this.acquisitions = Array.from(AcquisitionPointNotRendered.iterate(AcquisitionPoint.iterate(iterator, true)));
+        break;
+      case 'render':
+        this.acquisitions = Array.from(AcquisitionPointRenderedImageBitmap.iterate(AcquisitionPointNotRendered.iterate(AcquisitionPoint.iterate(iterator, true))));
+        break;
+      default: {
+        const exhaustive: never = this.option.preload;
+        throw new Error(`Exhaustive check: ${exhaustive} reached!`);
+      }
+    }
   }
 
   public content(time: number): Readonly<AcquisitionPointForRender> | null {

@@ -82,6 +82,13 @@ export const AcquisitionPointNotRendered = {
       yield to;
     }
   },
+  async *iterateAsync(iterator: AsyncIterable<AcquisitionPoint>): AsyncIterable<AcquisitionPointNotRendered> {
+    for await (const acquisition of iterator) {
+      const to = AcquisitionPointNotRendered.from(acquisition);
+      if (to == null ){ return; }
+      yield to;
+    }
+  },
 };
 
 export type AcquisitionPointRenderedImageBitmap = {

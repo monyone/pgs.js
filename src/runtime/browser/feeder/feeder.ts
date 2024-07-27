@@ -1,7 +1,9 @@
 import { AcquisitionPointForRender } from "../render";
 
+export type PGSFeederOptionPreloadType = 'none' | 'decode' | 'render';
+
 export type PGSFeederOption = {
-  preload: boolean
+  preload: PGSFeederOptionPreloadType
   timeshift: number
 }
 
