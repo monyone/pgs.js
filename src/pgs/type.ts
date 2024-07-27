@@ -403,30 +403,30 @@ export const Segment = {
         throw new ValidationError(`Unrecognized SegmentType: ${segmentType}`);
     }
   },
-  async fromAsync(stream: ByteStream, async: AsyncByteStream): Promise<Segment> {
-    const segmentType = stream.readU8();
-    const segmentSize = stream.readU16();
+  async fromAsync(stream: AsyncByteStream): Promise<Segment> {
+    const segmentType = await stream.readU8();
+    const segmentSize = await stream.readU16();
 
     switch (segmentType) {
       case SegmentType.PDS:
         return {
           type: SegmentType.PDS,
-          segment: PaletteDefinitionSegment.from(new ByteStream(await async.read(segmentSize))),
+          segment: PaletteDefinitionSegment.from(new ByteStream(await stream.read(segmentSize))),
         };
       case SegmentType.ODS:
         return {
           type: SegmentType.ODS,
-          segment: ObjectDefinitionSegment.from(new ByteStream(await async.read(segmentSize))),
+          segment: ObjectDefinitionSegment.from(new ByteStream(await stream.read(segmentSize))),
         };
       case SegmentType.PCS:
         return {
           type: SegmentType.PCS,
-          segment: PresentationCompositionSegment.from(new ByteStream(await async.read(segmentSize))),
+          segment: PresentationCompositionSegment.from(new ByteStream(await stream.read(segmentSize))),
         };
       case SegmentType.WDS:
         return {
           type: SegmentType.WDS,
-          segment: WindowDefinitionSegment.from(new ByteStream(await async.read(segmentSize))),
+          segment: WindowDefinitionSegment.from(new ByteStream(await stream.read(segmentSize))),
         };
       case SegmentType.END:
         return {
@@ -438,9 +438,9 @@ export const Segment = {
   }
 }
 
-export const MultiplexMethod = {
-  SUP: 'SUP',
-  MPEGTS: 'MPEGTS',
+export const HeaderLengthByFormat = {
+  SUP: 13,
+  MPEGTS: 5,
 };
 export type TimestampedSegment = Segment & {
   pts: number;
@@ -463,13 +463,13 @@ export const TimestampedSegment = {
       timescale
     };
   },
-  async fromSUPFormatAsync(stream: ByteStream, async: AsyncByteStream): Promise<TimestampedSegment> {
-    const magic = stream.readU16();
+  async fromSUPFormatAsync(stream: AsyncByteStream): Promise<TimestampedSegment> {
+    const magic = await stream.readU16();
     if (magic !== 0x5047) { throw new ValidationError('Magic Number not Found!'); }
-    const pts = stream.readU32();
-    const dts = stream.readU32();
+    const pts = await stream.readU32();
+    const dts = await stream.readU32();
     const timescale = 90000;
-    const segment = await Segment.fromAsync(stream, async);
+    const segment = await Segment.fromAsync(stream);
 
     return {
       ... segment,
@@ -491,11 +491,11 @@ export const TimestampedSegment = {
       timescale
     };
   },
-  async fromMpegTSFormatAsync(stream: ByteStream, async: AsyncByteStream, pts: number, dts: number): Promise<TimestampedSegment> {
-    const magic = stream.readU16();
+  async fromMpegTSFormatAsync(stream: AsyncByteStream, pts: number, dts: number): Promise<TimestampedSegment> {
+    const magic = await stream.readU16();
     if (magic !== 0x5047) { throw new ValidationError('Magic Number not Found!'); }
     const timescale = 90000;
-    const segment = await Segment.fromAsync(stream, async);
+    const segment = await Segment.fromAsync(stream);
 
     return {
       ... segment,
@@ -512,8 +512,8 @@ export const TimestampedSegment = {
   },
   async *iterateSupFormatAsync(async: ReadableStream): AsyncIterable<TimestampedSegment> {
     const stream = new AsyncByteStream(async);
-    while(await stream.exists(13)) {
-      yield this.fromSUPFormatAsync(new ByteStream(await stream.read(13)), stream);
+    while(await stream.exists(HeaderLengthByFormat.SUP)) {
+      yield this.fromSUPFormatAsync(stream);
     }
   },
   *iterateMpegTSFormat(buffer: ArrayBuffer, pts: number, dts: number): Iterable<TimestampedSegment> {
@@ -524,8 +524,8 @@ export const TimestampedSegment = {
   },
   async *iterateMpegTSFormatAsync(readable: ReadableStream, pts: number, dts: number): AsyncIterable<TimestampedSegment> {
     const stream = new AsyncByteStream(readable);
-    while(await stream.exists(5)) {
-      yield this.fromMpegTSFormatAsync(new ByteStream(await stream.read(5)), stream, pts, dts);
+    while(await stream.exists(HeaderLengthByFormat.MPEGTS)) {
+      yield this.fromMpegTSFormatAsync(stream, pts, dts);
     }
   }
 }
