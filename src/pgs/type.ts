@@ -607,30 +607,40 @@ export const DisplaySet = {
     }
   },
   *aggregate(iterator: Iterable<TimestampedSegment>): Iterable<DisplaySet> {
-    let segments: TimestampedSegment[] = [];
+    let segments: TimestampedSegment[] | null = null;
 
     for (const segment of iterator) {
+      if (segment.type === SegmentType.PCS) {
+        segments = [];
+      }
+      if (segments == null) { continue; }
+
       if (segment.type !== SegmentType.END) {
         segments.push(segment);
       } else {
         yield this.from(segments);
-        segments = [];
+        segments = null;
       }
     }
-    if (segments.length > 0) { yield this.from(segments); }
+    if (segments != null) { yield this.from(segments); }
   },
   async *aggregateAsync(iterator: AsyncIterable<TimestampedSegment>): AsyncIterable<DisplaySet> {
-    let segments: TimestampedSegment[] = [];
+    let segments: TimestampedSegment[] | null = null;
 
     for await (const segment of iterator) {
+      if (segment.type === SegmentType.PCS) {
+        segments = [];
+      }
+      if (segments == null) { continue; }
+
       if (segment.type !== SegmentType.END) {
         segments.push(segment);
       } else {
         yield this.from(segments);
-        segments = [];
+        segments = null;
       }
     }
-    if (segments.length > 0) { yield this.from(segments); }
+    if (segments != null) { yield this.from(segments); }
   },
 }
 
@@ -640,16 +650,16 @@ export type AcquisitionPoint = {
 } & DisplaySetSelfContained;
 export const AcquisitionPoint = {
   from(displaysets: DisplaySet[], decode = false): AcquisitionPoint[] {
-    const firstCompositionState = displaysets.at(0)?.PCS.compositionState;
-    if (firstCompositionState == null || firstCompositionState === CompositionState.Normal) {
-      throw new ValidationError('first compositionState is not Acquisition');
-    }
-
     const acquisitions: AcquisitionPoint[] = [];
+    let reference: DisplaySet | null = null;
     for (const displayset of displaysets) {
+      if (displayset.compositionState === CompositionState.EpochStart || displayset.compositionState === CompositionState.AcquisitionPoint) {
+        reference = displayset;
+      }
+      if (reference == null) { continue; }
+
       const composition = displayset.PCS;
-      const palette = displaysets.map((set) => set.PDS).filter((pds) => pds != null).find((pds) => pds.paletteID === composition.paletteId);
-      if (palette == null) { throw new ValidationError('palette not found!'); }
+      const palette = reference.PDS;
 
       if (composition.compositionObjects.length === 0) { // End of Epoch
         acquisitions.push({
@@ -664,8 +674,8 @@ export const AcquisitionPoint = {
         continue;
       }
 
-      const windows = WindowDefinitionSegment.valueOf(displaysets.flatMap((set) => set.WDS).filter(set => set != null));
-      const ods = displaysets.flatMap((set) => set.ODS).filter(set => set != null);
+      const windows = WindowDefinitionSegment.valueOf([reference.WDS, ... (displayset.WDS ? [displayset.WDS] : [])]);
+      const ods = [... reference.ODS, ... (displayset.ODS ? displayset.ODS : [])];
       const objects = decode ? DecodedObjectDefinitionSegment.valueOf(palette, ods) : ObjectDefinitionSegment.valueOf(ods);
 
       acquisitions.push({
@@ -685,7 +695,7 @@ export const AcquisitionPoint = {
     let displaysets: DisplaySet[] = [];
 
     for (const displayset of iterator) {
-      if (displayset.PCS.compositionState !== CompositionState.Normal) {
+      if (displayset.compositionState === CompositionState.EpochStart || displayset.compositionState === CompositionState.AcquisitionPoint) {
         if (displaysets.length > 0) {
           yield* AcquisitionPoint.from(displaysets, decode);
         }
@@ -699,7 +709,7 @@ export const AcquisitionPoint = {
     let displaysets: DisplaySet[] = [];
 
     for await (const displayset of iterator) {
-      if (displayset.PCS.compositionState !== CompositionState.Normal) {
+      if (displayset.compositionState === CompositionState.EpochStart || displayset.compositionState === CompositionState.AcquisitionPoint) {
         if (displaysets.length > 0) {
           yield* AcquisitionPoint.from(displaysets, decode);
         }
