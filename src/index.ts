@@ -1,6 +1,7 @@
-import { AcquisitionPoint, DisplaySet, TimestampedSegment } from './pgs/type';
-
 export { default as EOFError} from './util/eof';
+export { default as AVLTree } from './util/avl';
+
+import { AcquisitionPoint, DisplaySet, TimestampedSegment } from './pgs/type';
 
 export type * from './pgs/type'
 export * from './pgs/type';
