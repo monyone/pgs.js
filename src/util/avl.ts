@@ -6,6 +6,9 @@ interface AVLTreeNodeInterface<K, V> {
   rotate(): void;
   has(key: K): boolean;
   get(key: K): V | undefined;
+  floor(key: K): V | undefined;
+  ceil(key: K): V | undefined;
+  range(from: K, to: K): Iterable<V>;
   insert(key: K, value: V): void;
   delete(key: K): void;
   replace(from: AVLTreeNode<K, V>, to: AVLTreeNode<K, V> | null): void;
@@ -44,6 +47,18 @@ class AVLTreeDummyNode<K, V> implements AVLTreeNodeInterface<K, V> {
 
   public get(key: K): V | undefined {
     return this.actual?.get(key) ?? undefined;
+  }
+
+  public floor(key: K): V | undefined {
+    return this.actual?.floor(key) ?? undefined;
+  }
+
+  public ceil(key: K): V | undefined {
+    return this.actual?.ceil(key) ?? undefined;
+  }
+
+  public *range(from: K, to: K): Iterable<V> {
+    yield* this.actual?.range(from, to) ?? [];
   }
 
   public insert(key: K, value: V): void {
@@ -166,7 +181,7 @@ class AVLTreeNode<K, V> implements AVLTreeNodeInterface<K, V> {
     }
   }
 
-  private find(key: K): AVLTreeNode<K, V> | null {
+  private find(key: K, algorithm: 'exact' | 'floor' | 'ceil' = 'exact'): AVLTreeNode<K, V> | null {
     let node: AVLTreeNode<K, V> = this;
 
     FIND:
@@ -179,12 +194,16 @@ class AVLTreeNode<K, V> implements AVLTreeNodeInterface<K, V> {
           if (node.left != null) {
             node = node.left;
             continue FIND;
+          } else if (algorithm === 'ceil') {
+            return node;
           }
           return null;
         case 1:
           if (node.right != null) {
             node = node.right;
             continue FIND;
+          } else if (algorithm === 'floor') {
+            return node;
           }
           return null;
         default:
@@ -195,11 +214,28 @@ class AVLTreeNode<K, V> implements AVLTreeNodeInterface<K, V> {
   }
 
   public has(key: K): boolean {
-    return this.find(key) != null;
+    return this.find(key, 'exact') != null;
   }
 
   public get(key: K): V | undefined {
-    return this.find(key)?.value ?? undefined;
+    return this.find(key, 'exact')?.value ?? undefined;
+  }
+
+  public floor(key: K): V | undefined {
+    return this.find(key, 'floor')?.value ?? undefined;
+  }
+
+  public ceil(key: K): V | undefined {
+    return this.find(key, 'ceil')?.value ?? undefined;
+  }
+
+  public *range(from: K, to: K): Iterable<V> {
+    const f = this.compare(from, this.key);
+    const t = this.compare(to, this.key);
+
+    if (f <= 0) { yield* (this.left?.range(from, to) ?? []); }
+    if (f <= 0 && t > 0){ yield this.value; }
+    if (t > 0) { yield* (this.right?.range(from, to) ?? []); }
   }
 
   public insert(key: K, value: V): void {
@@ -301,6 +337,22 @@ export default class AVLTree<K, V>  {
 
   public has(key: K): boolean {
     return this.root.has(key);
+  }
+
+  public get(key: K): V | undefined {
+    return this.root.get(key);
+  }
+
+  public floor(key: K): V | undefined {
+    return this.root.floor(key);
+  }
+
+  public ceil(key: K): V | undefined {
+    return this.root.ceil(key);
+  }
+
+  public *range(from: K, to: K): Iterable<V> {
+    yield* this.root.range(from, to);
   }
 
   public insert(key: K, value: V): void {
