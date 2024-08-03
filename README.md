@@ -40,7 +40,7 @@ export type PGSSupFeederOption = {
 
 ```html
 <script type="module">
-  import { PGSController, PGSSupFeeder } from "pgs.js"; // Please Specify ImportMap!
+  import { PGSController, PGSSupFeeder } from "pgs.js";
   const res = await fetch('./something.sup');
   const sup = await res.arrayBuffer();
 
@@ -58,13 +58,30 @@ export type PGSSupFeederOption = {
 
 ```html
 <script type="module">
-  import { PGSController, PGSAsyncSupFeeder } from "pgs.js"; // Please Specify ImportMap!
+  import { PGSController, PGSAsyncSupFeeder } from "pgs.js";
   const res = await fetch('./something.sup');
 
   const video = document.getElementById('video');
 
   const controller = new PGSController();
   const feeder = new PGSAsyncSupFeeder(res.body);
+  // use `feeder.done` for wait loading
+
+  controller.attachFeeder(feeder);
+  controller.attachMedia(video)
+</script>
+```
+
+### Work with M2TS
+
+```html
+<script type="module">
+  import { PGSController, PGSMpegTsFeeder } from "pgs.js";
+  const video = document.getElementById('video');
+
+  const controller = new PGSController();
+  const feeder = new PGSMpegTsFeeder();
+  // call `feeder.feed(arraybuffer, pts, dts, timescale)` for insert PES
 
   controller.attachFeeder(feeder);
   controller.attachMedia(video)
