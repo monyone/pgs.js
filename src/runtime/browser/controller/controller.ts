@@ -121,7 +121,6 @@ export default class PGSController {
 
     // If already rendered, ignore it
     if (this.priviousPts === content.pts) { return ; }
-
     this.renderer?.render(content);
 
     // Update privious information
