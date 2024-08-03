@@ -33,7 +33,6 @@ export default class PGSSupFeeder implements PGSFeeder {
   private priviousTime: number | null = null;
   private decode: AVLTree<DecodingOrderedKey, TimestampedSegment> = new AVLTree<DecodingOrderedKey, TimestampedSegment>(compareKey);
   private decodeBuffer: TimestampedSegment[] = [];
-  private decodingPromise: Promise<void>;
   private decodingNotify: (() => void);
   private abortController: AbortController = new AbortController();
   private present: AVLTree<number, AcquisitionPointForRender> = new AVLTree<number, AcquisitionPointForRender>(compare);
@@ -46,9 +45,6 @@ export default class PGSSupFeeder implements PGSFeeder {
     };
 
     this.decodingNotify = Promise.resolve; // Dummy
-    this.decodingPromise = new Promise((resolve) => {
-      this.decodingNotify = resolve;
-    });
     this.pump();
   }
 
@@ -61,14 +57,13 @@ export default class PGSSupFeeder implements PGSFeeder {
     }
 
     this.decodingNotify?.();
-    this.decodingPromise = new Promise((resolve) => {
-      this.decodingNotify = resolve;
-    });
   }
 
   private async *generator(signal: AbortSignal) {
     while (true) {
-      await this.decodingPromise;
+      await new Promise<void>((resolve) => {
+        this.decodingNotify = resolve;
+      });
       if (signal.aborted) { return; }
 
       const recieved = [... this.decodeBuffer];
