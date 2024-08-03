@@ -1,6 +1,5 @@
 import { AcquisitionPoint, DisplaySet, SegmentType, TimestampedSegment } from '../../../pgs/type'
 import AVLTree from '../../../util/avl';
-import { ByteStream } from '../../../util/bytestream';
 import { AcquisitionPointForRender, AcquisitionPointNotRendered, AcquisitionPointRenderedImageBitmap } from '../render';
 
 import PGSFeeder, { PGSFeederOption } from './feeder';
@@ -107,8 +106,9 @@ export default class PGSSupFeeder implements PGSFeeder {
   }
 
   public feed(data: ArrayBuffer, pts: number, dts: number, timescale: number) {
-    const segment = TimestampedSegment.fromMpegTSFormat(new ByteStream(data), pts, dts, timescale);
-    this.decode.insert({ dts: segment.dts / segment.timescale, order: DecodingOrderMap.get(segment.type)! }, segment);
+    for (const segment of TimestampedSegment.iterateMpegTSFormat(data, pts, dts, timescale)) {
+      this.decode.insert({ dts: segment.dts / segment.timescale, order: DecodingOrderMap.get(segment.type)! }, segment);
+    }
   }
 
   public content(time: number): Readonly<AcquisitionPointForRender> | null {

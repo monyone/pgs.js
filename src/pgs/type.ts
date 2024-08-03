@@ -484,8 +484,6 @@ export const TimestampedSegment = {
     };
   },
   fromMpegTSFormat(stream: ByteStream, pts: number, dts: number, timescale = 90000): TimestampedSegment {
-    const magic = stream.readU16();
-    if (magic !== 0x5047) { throw new ValidationError('Magic Number not Found!'); }
     const segment = Segment.from(stream);
 
     return {
@@ -496,8 +494,6 @@ export const TimestampedSegment = {
     };
   },
   async fromMpegTSFormatAsync(stream: AsyncByteStream, pts: number, dts: number, timescale = 90000): Promise<TimestampedSegment> {
-    const magic = await stream.readU16();
-    if (magic !== 0x5047) { throw new ValidationError('Magic Number not Found!'); }
     const segment = await Segment.fromAsync(stream);
 
     return {
@@ -519,16 +515,16 @@ export const TimestampedSegment = {
       yield this.fromSUPFormatAsync(stream);
     }
   },
-  *iterateMpegTSFormat(buffer: ArrayBuffer, pts: number, dts: number): Iterable<TimestampedSegment> {
+  *iterateMpegTSFormat(buffer: ArrayBuffer, pts: number, dts: number, timescale = 90000): Iterable<TimestampedSegment> {
     const stream = new ByteStream(buffer);
     while(!stream.isEmpty()) {
-      yield this.fromMpegTSFormat(stream, pts, dts);
+      yield this.fromMpegTSFormat(stream, pts, dts, timescale);
     }
   },
-  async *iterateMpegTSFormatAsync(readable: ReadableStream, pts: number, dts: number): AsyncIterable<TimestampedSegment> {
+  async *iterateMpegTSFormatAsync(readable: ReadableStream, pts: number, dts: number, timescale = 90000): AsyncIterable<TimestampedSegment> {
     const stream = new AsyncByteStream(readable);
     while(await stream.exists(HeaderLengthByFormat.MPEGTS)) {
-      yield this.fromMpegTSFormatAsync(stream, pts, dts);
+      yield this.fromMpegTSFormatAsync(stream, pts, dts, timescale);
     }
   }
 }
