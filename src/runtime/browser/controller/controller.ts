@@ -89,10 +89,12 @@ export default class PGSController {
 
   public attachFeeder(feeder: PGSFeeder) {
     this.feeder = feeder;
+    this.clear();
   }
 
   public detachFeeder() {
     this.feeder = null;
+    this.clear();
   }
 
 
