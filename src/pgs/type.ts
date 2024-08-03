@@ -483,10 +483,9 @@ export const TimestampedSegment = {
       timescale
     };
   },
-  fromMpegTSFormat(stream: ByteStream, pts: number, dts: number): TimestampedSegment {
+  fromMpegTSFormat(stream: ByteStream, pts: number, dts: number, timescale = 90000): TimestampedSegment {
     const magic = stream.readU16();
     if (magic !== 0x5047) { throw new ValidationError('Magic Number not Found!'); }
-    const timescale = 90000;
     const segment = Segment.from(stream);
 
     return {
@@ -496,10 +495,9 @@ export const TimestampedSegment = {
       timescale
     };
   },
-  async fromMpegTSFormatAsync(stream: AsyncByteStream, pts: number, dts: number): Promise<TimestampedSegment> {
+  async fromMpegTSFormatAsync(stream: AsyncByteStream, pts: number, dts: number, timescale = 90000): Promise<TimestampedSegment> {
     const magic = await stream.readU16();
     if (magic !== 0x5047) { throw new ValidationError('Magic Number not Found!'); }
-    const timescale = 90000;
     const segment = await Segment.fromAsync(stream);
 
     return {
@@ -567,6 +565,9 @@ export type DisplaySet = {
   DisplaySetIntraInformation | DisplaySetNormalInformation
 );
 export const DisplaySet = {
+  isAcquisitionPoint(displayset: DisplaySet): displayset is (DisplaySet & DisplaySetIntraInformation) {
+    return displayset.compositionState === CompositionState.EpochStart || displayset.compositionState === CompositionState.AcquisitionPoint;
+  },
   from(segments: TimestampedSegment[]): DisplaySet {
     const pcses = segments.filter((segment) => segment.type === SegmentType.PCS);
     if (pcses.length === 0) {
@@ -605,6 +606,17 @@ export const DisplaySet = {
         ODS: odses.map(ods => ods.segment)
       };
     }
+  },
+  merge(reference: DisplaySet & DisplaySetIntraInformation, displayset: DisplaySet): DisplaySet & DisplaySetIntraInformation {
+    return {
+      pts: displayset.pts,
+      timescale: displayset.timescale,
+      compositionState: reference.compositionState,
+      PCS: displayset.PCS,
+      PDS: displayset.PDS ?? reference.PDS,
+      WDS: displayset.WDS ?? reference.WDS,
+      ODS: displayset.ODS ?? reference.ODS,
+    };
   },
   *aggregate(iterator: Iterable<TimestampedSegment>): Iterable<DisplaySet> {
     let segments: TimestampedSegment[] | null = null;
@@ -649,75 +661,49 @@ export type AcquisitionPoint = {
   timescale: number;
 } & DisplaySetSelfContained;
 export const AcquisitionPoint = {
-  from(displaysets: DisplaySet[], decode = false): AcquisitionPoint[] {
-    const acquisitions: AcquisitionPoint[] = [];
-    let reference: DisplaySet | null = null;
-    for (const displayset of displaysets) {
-      if (displayset.compositionState === CompositionState.EpochStart || displayset.compositionState === CompositionState.AcquisitionPoint) {
-        reference = displayset;
-      }
-      if (reference == null) { continue; }
+  from(displayset: DisplaySet & DisplaySetIntraInformation, decode = false): AcquisitionPoint {
+    const composition = displayset.PCS;
+    const palette = displayset.PDS;
 
-      const composition = displayset.PCS;
-      const palette = reference.PDS;
-
-      if (composition.compositionObjects.length === 0) { // End of Epoch
-        acquisitions.push({
-          pts: displayset.pts,
-          timescale: displayset.timescale,
-          compositionState: displayset.compositionState,
-          composition,
-          palette,
-          windows: new Map<number, WindowDefinition>(),
-          objects: new Map<number, ObjectDefinitionSegment[]>(),
-        });
-        continue;
-      }
-
-      const windows = WindowDefinitionSegment.valueOf([reference.WDS, ... (displayset.WDS ? [displayset.WDS] : [])]);
-      const ods = [... reference.ODS, ... (displayset.ODS ? displayset.ODS : [])];
-      const objects = decode ? DecodedObjectDefinitionSegment.valueOf(palette, ods) : ObjectDefinitionSegment.valueOf(ods);
-
-      acquisitions.push({
+    if (composition.compositionObjects.length === 0) { // End of Epoch
+      return {
         pts: displayset.pts,
         timescale: displayset.timescale,
         compositionState: displayset.compositionState,
         composition,
         palette,
-        windows,
-        objects,
-      });
+        windows: new Map<number, WindowDefinition>(),
+        objects: new Map<number, ObjectDefinitionSegment[]>(),
+      };
     }
 
-    return acquisitions;
+    const windows = WindowDefinitionSegment.valueOf([displayset.WDS]);
+    const objects = decode ? DecodedObjectDefinitionSegment.valueOf(palette, displayset.ODS) : ObjectDefinitionSegment.valueOf(displayset.ODS);
+    return {
+      pts: displayset.pts,
+      timescale: displayset.timescale,
+      compositionState: displayset.compositionState,
+      composition,
+      palette,
+      windows,
+      objects,
+    };
   },
   *iterate(iterator: Iterable<DisplaySet>, decode = false): Iterable<AcquisitionPoint> {
-    let displaysets: DisplaySet[] = [];
-
+    let reference: (DisplaySet & DisplaySetIntraInformation) | null = null;
     for (const displayset of iterator) {
-      if (displayset.compositionState === CompositionState.EpochStart || displayset.compositionState === CompositionState.AcquisitionPoint) {
-        if (displaysets.length > 0) {
-          yield* AcquisitionPoint.from(displaysets, decode);
-        }
-        displaysets = [];
-      }
-      displaysets.push(displayset);
+      if (DisplaySet.isAcquisitionPoint(displayset)) { reference = displayset; }
+      if (reference == null) { continue; }
+      yield AcquisitionPoint.from(DisplaySet.merge(reference, displayset), decode);
     }
-    if (displaysets.length > 0) { yield* AcquisitionPoint.from(displaysets); }
   },
   async *iterateAsync(iterator: AsyncIterable<DisplaySet>, decode = false): AsyncIterable<AcquisitionPoint> {
-    let displaysets: DisplaySet[] = [];
-
+    let reference: (DisplaySet & DisplaySetIntraInformation) | null = null;
     for await (const displayset of iterator) {
-      if (displayset.compositionState === CompositionState.EpochStart || displayset.compositionState === CompositionState.AcquisitionPoint) {
-        if (displaysets.length > 0) {
-          yield* AcquisitionPoint.from(displaysets, decode);
-        }
-        displaysets = [];
-      }
-      displaysets.push(displayset);
+      if (DisplaySet.isAcquisitionPoint(displayset)) { reference = displayset; }
+      if (reference == null) { continue; }
+      yield AcquisitionPoint.from(DisplaySet.merge(reference, displayset), decode);
     }
-    if (displaysets.length > 0) { yield* AcquisitionPoint.from(displaysets); }
   },
 }
 

@@ -9,6 +9,7 @@ export * from './pgs/type';
 export type { default as PGSFeeder } from './runtime/browser/feeder//feeder';
 export { default as PGSSupFeeder } from './runtime/browser/feeder/supfeeder';
 export { default as PGSAsyncSupFeeder } from './runtime/browser/feeder/asyncsupfeeder';
+export { default as PGSMpegTSFeeder } from './runtime/browser/feeder/mpegtsfeeder';
 
 export { default as PGSController } from './runtime/browser/controller/controller';
 export type { default as PGSRenderer } from './runtime/browser/renderer/renderer';

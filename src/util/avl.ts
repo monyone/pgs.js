@@ -330,9 +330,15 @@ class AVLTreeNode<K, V> implements AVLTreeNodeInterface<K, V> {
 
 export default class AVLTree<K, V>  {
   private root: AVLTreeNodeInterface<K, V>;
+  private compare: (fst: K, snd: K) => -1 | 0 | 1;
 
   public constructor(compare: (fst: K, snd: K) => -1 | 0 | 1) {
-    this.root = new AVLTreeDummyNode<K, V>(compare);
+    this.compare = compare;
+    this.root = new AVLTreeDummyNode<K, V>(this.compare);
+  }
+
+  public clear() {
+    this.root = new AVLTreeDummyNode<K, V>(this.compare);
   }
 
   public has(key: K): boolean {
