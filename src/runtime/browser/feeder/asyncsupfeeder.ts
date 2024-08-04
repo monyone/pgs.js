@@ -76,7 +76,7 @@ export default class AsyncPGSSupFeeder implements PGSFeeder {
     return this.acquisitions[begin] ?? null;
   }
 
-  public onseek(): void {
-    return; // No Effect
-  }
+  public onattach(): void {}
+  public ondetach(): void {}
+  public onseek(): void {}
 }

@@ -9,5 +9,7 @@ export type PGSFeederOption = {
 
 export default interface PGSFeeder {
   content(time: number): AcquisitionPointForRender | null;
+  onattach(): void;
+  ondetach(): void;
   onseek(): void;
 }

@@ -126,9 +126,21 @@ export default class PGSSupFeeder implements PGSFeeder {
     return this.present.floor(time) ?? null;
   }
 
-  public onseek(): void {
+  private clear(): void {
     this.present.clear();
     this.priviousTime = null;
     this.notify(null);
+  }
+
+  public onattach(): void {
+    this.clear();
+  }
+
+  public ondetach(): void {
+    this.clear();
+  }
+
+  public onseek(): void {
+    this.clear();
   }
 }
