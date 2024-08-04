@@ -62,14 +62,14 @@ export default class PGSSupFeeder implements PGSFeeder {
     }
 
     this.decodingNotify?.();
-    this.decodingPromise = new Promise((resolve) => {
-      this.decodingNotify = resolve;
-    });
   }
 
   private async *generator(signal: AbortSignal) {
     while (true) {
       await this.decodingPromise;
+      this.decodingPromise = new Promise<void>((resolve) => {
+        this.decodingNotify = resolve;
+      });
       if (signal.aborted) {
         this.decodeBuffer = [];
         return;
