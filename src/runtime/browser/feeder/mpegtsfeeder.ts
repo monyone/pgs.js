@@ -37,6 +37,7 @@ export default class PGSSupFeeder implements PGSFeeder {
   private decodingNotify: (() => void);
   private abortController: AbortController = new AbortController();
   private present: AVLTree<number, AcquisitionPointForRender> = new AVLTree<number, AcquisitionPointForRender>(compare);
+  private isDestroyed: boolean = false;
 
   public constructor(option?: Partial<PGSFeederOption>) {
     this.option = {
@@ -82,7 +83,7 @@ export default class PGSSupFeeder implements PGSFeeder {
   }
 
   private async pump() {
-    while (true) {
+    while (!this.isDestroyed) {
       const iterator = DisplaySet.aggregateAsync(this.generator(this.abortController.signal));
       switch (this.option.preload) {
         case 'none':
@@ -141,6 +142,11 @@ export default class PGSSupFeeder implements PGSFeeder {
   }
 
   public onseek(): void {
+    this.clear();
+  }
+
+  public destroy(): void {
+    this.isDestroyed = true;
     this.clear();
   }
 }
