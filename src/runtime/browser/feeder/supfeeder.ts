@@ -16,19 +16,16 @@ export default class PGSSupFeeder implements PGSFeeder {
 
     const iterator = DisplaySet.aggregate(TimestampedSegment.iterateSupFormat(sup));
     switch (this.option.preload) {
-      case 'none':
-        this.acquisitions = Array.from(AcquisitionPointNotRendered.iterate(AcquisitionPoint.iterate(iterator, false)));
-        break;
       case 'decode':
         this.acquisitions = Array.from(AcquisitionPointNotRendered.iterate(AcquisitionPoint.iterate(iterator, true)));
         break;
       case 'render':
         this.acquisitions = Array.from(AcquisitionPointRenderedImageBitmap.iterate(AcquisitionPoint.iterate(iterator, true)));
         break;
-      default: {
-        const exhaustive: never = this.option.preload;
-        throw new Error(`Exhaustive check: ${exhaustive} reached!`);
-      }
+      case 'none':
+      default:
+          this.acquisitions = Array.from(AcquisitionPointNotRendered.iterate(AcquisitionPoint.iterate(iterator, false)));
+          break;
     }
   }
 

@@ -23,11 +23,6 @@ export default class AsyncPGSSupFeeder implements PGSFeeder {
   private async prepare(stream: ReadableStream<ArrayBufferView | ArrayBuffer>, resolve?: (result: boolean) => void) {
     const iterator = DisplaySet.aggregateAsync(TimestampedSegment.iterateSupFormatAsync(stream));
     switch (this.option.preload) {
-      case 'none':
-        for await (const acquisition of AcquisitionPointNotRendered.iterateAsync(AcquisitionPoint.iterateAsync(iterator, false))) {
-          this.acquisitions.push(acquisition);
-        }
-        break;
       case 'decode':
         for await (const acquisition of AcquisitionPointNotRendered.iterateAsync(AcquisitionPoint.iterateAsync(iterator, true))) {
           this.acquisitions.push(acquisition);
@@ -38,10 +33,12 @@ export default class AsyncPGSSupFeeder implements PGSFeeder {
           this.acquisitions.push(acquisition);
         }
         break;
-      default: {
-        const exhaustive: never = this.option.preload;
-        throw new Error(`Exhaustive check: ${exhaustive} reached!`);
-      }
+      case 'none':
+      default:
+        for await (const acquisition of AcquisitionPointNotRendered.iterateAsync(AcquisitionPoint.iterateAsync(iterator, false))) {
+          this.acquisitions.push(acquisition);
+        }
+        break;
     }
     resolve?.(true);
   }

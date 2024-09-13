@@ -85,11 +85,6 @@ export default class PGSSupFeeder implements PGSFeeder {
     while (!this.isDestroyed) {
       const iterator = DisplaySet.aggregateAsync(this.generator(this.abortController.signal));
       switch (this.option.preload) {
-        case 'none':
-          for await (const acquisition of AcquisitionPointNotRendered.iterateAsync(AcquisitionPoint.iterateAsync(iterator, false))) {
-            this.present.insert(acquisition.pts / acquisition.timescale, acquisition);
-          }
-          break;
         case 'decode':
           for await (const acquisition of AcquisitionPointNotRendered.iterateAsync(AcquisitionPoint.iterateAsync(iterator, true))) {
             this.present.insert(acquisition.pts / acquisition.timescale, acquisition);
@@ -100,10 +95,12 @@ export default class PGSSupFeeder implements PGSFeeder {
             this.present.insert(acquisition.pts / acquisition.timescale, acquisition);
           }
           break;
-        default: {
-          const exhaustive: never = this.option.preload;
-          throw new Error(`Exhaustive check: ${exhaustive} reached!`);
-        }
+        case 'none':
+        default:
+          for await (const acquisition of AcquisitionPointNotRendered.iterateAsync(AcquisitionPoint.iterateAsync(iterator, false))) {
+            this.present.insert(acquisition.pts / acquisition.timescale, acquisition);
+          }
+          break;
       }
     }
   }
