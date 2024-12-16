@@ -307,7 +307,8 @@ export const DecodedObjectDefinitionSegment = {
         let length = 1;
 
         if (first !== 0) {
-          color = palette.paletteEntries[first];
+          const entry = palette.paletteEntries.find((entry) => entry.paletteEntryID === first)!;
+          color = entry;
         } else {
           const second = stream.readU8();
           if (second === 0) { continue; }
@@ -316,7 +317,10 @@ export const DecodedObjectDefinitionSegment = {
           const length_flag = (second & 0x40) !== 0;
 
           length = length_flag ? (second & 0x3F) * 2**8 + stream.readU8() : (second & 0x3F);
-          color = color_flag ? palette.paletteEntries[stream.readU8()] : palette.paletteEntries[0];
+
+          const target = color_flag ? stream.readU8() : 0;
+          const entry = palette.paletteEntries.find((entry) => entry.paletteEntryID === target)!;
+          color = entry;
         }
 
         if (color == null) { offset += length; continue; }
