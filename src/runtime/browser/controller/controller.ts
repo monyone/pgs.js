@@ -99,7 +99,6 @@ export default class PGSController {
     this.clear();
   }
 
-
   private onSeeking() {
     this.feeder?.onseek();
     this.clear();

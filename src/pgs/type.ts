@@ -587,11 +587,19 @@ export const DisplaySet = {
         WDS: wds?.segment,
         ODS: odses.map(ods => ods.segment)
       };
+    } else if (pcs.segment.numberOfCompositionObject === 0) {
+      return {
+        pts: pcs.pts,
+        timescale: pcs.timescale,
+        compositionState: pcs.segment.compositionState,
+        PCS: pcs.segment,
+        PDS: PaletteDefinitionSegment.from(new ByteStream(Uint8Array.from([0, 0]).buffer)), // dummy
+        WDS: WindowDefinitionSegment.from(new ByteStream(Uint8Array.from([0, 0]).buffer)), // dummy
+        ODS: odses.map(ods => ods.segment),
+      };
+    } else if (pds == null) {
+      throw new ValidationError('PDS not Found!');
     } else {
-      if (pds == null) {
-        throw new ValidationError('PDS not Found!');
-      }
-
       return {
         pts: pcs.pts,
         timescale: pcs.timescale,
